@@ -47,9 +47,6 @@ services:
       - ./:/var/www
     networks:
       - dokploy-network
-    depends_on:
-      mongo:
-        condition: service_started # Wait for postgres to start
 
   workspace:
     # For the workspace service, we will also create a custom image to install and setup all the necessary stuff.

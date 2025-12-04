@@ -37,9 +37,6 @@ services:
       # Load the environment variables from the Laravel application
       - .env
     user: "${UID:-1000}:${GID:-1000}"
-    volumes:
-      # Mount the application code for live updates
-      - ./:/var/www
     networks:
       - dokploy-network
 
@@ -60,8 +57,6 @@ services:
     env_file:
       - .env
     user: "${UID:-1000}:${GID:-1000}"
-    volumes:
-      - ./:/var/www
     networks:
       - dokploy-network
     restart: always

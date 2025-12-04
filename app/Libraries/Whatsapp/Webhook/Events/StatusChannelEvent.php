@@ -38,8 +38,13 @@ class StatusChannelEvent extends WebhookEvent
         // event in the model channel
         $channel = (new \App\Models\Channel)
             ->where('channel_uuid', $this->channelUuid)
-            ->firstOrFail();
+            ->first();
 
+        if (!$channel) {
+            return;
+        }
+
+        $channel->setConnectionStatus($this->eventType === 'disconnected' ? 'D' : 'C');
         $channel->setLastStatusEvent(
             new LastStatusEvent(
                 $this->eventType,

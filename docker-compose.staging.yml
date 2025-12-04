@@ -18,10 +18,10 @@ services:
         condition: service_started # Wait for php-fpm to start
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.<unique-name>.rule=Host(`whatsappqr-test.deudu.co`)"
-      - "traefik.http.routers.<unique-name>.entrypoints=websecure"
-      - "traefik.http.routers.<unique-name>.tls.certResolver=letsencrypt"
-      - "traefik.http.services.<unique-name>.loadbalancer.server.port=8080"
+      - "traefik.http.routers.a9a2ba3c-34c2-4a21-b15c-46ff85fce9e6.rule=Host(`whatsappqr-test.deudu.co`)"
+      - "traefik.http.routers.a9a2ba3c-34c2-4a21-b15c-46ff85fce9e6.entrypoints=websecure"
+      - "traefik.http.routers.a9a2ba3c-34c2-4a21-b15c-46ff85fce9e6.tls.certResolver=letsencrypt"
+      - "traefik.http.services.a9a2ba3c-34c2-4a21-b15c-46ff85fce9e6.loadbalancer.server.port=8080"
 
   php-fpm:
     # For the php-fpm service, we will use our common PHP-FPM Dockerfile with the development target

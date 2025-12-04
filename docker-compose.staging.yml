@@ -48,6 +48,30 @@ services:
     networks:
       - dokploy-network
 
+  worker:
+    build:
+      context: .
+      dockerfile: ./.docker/common/php-fpm/Dockerfile
+      target: development
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+        XDEBUG_ENABLED: ${XDEBUG_ENABLED:-true}
+        XDEBUG_MODE: develop,coverage,debug,profile
+        XDEBUG_HOST: ${XDEBUG_HOST:-host.docker.internal}
+        XDEBUG_IDE_KEY: ${XDEBUG_IDE_KEY:-DOCKER}
+        XDEBUG_LOG: /dev/stdout
+        XDEBUG_LOG_LEVEL: 0
+    env_file:
+      - .env
+    user: "${UID:-1000}:${GID:-1000}"
+    volumes:
+      - ./:/var/www
+    networks:
+      - dokploy-network
+    restart: always
+    command: php artisan queue:work database --sleep=3 --tries=3
+
   workspace:
     # For the workspace service, we will also create a custom image to install and setup all the necessary stuff.
     build:

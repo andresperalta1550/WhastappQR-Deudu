@@ -29,5 +29,6 @@ gosu www-data php artisan migrate --force
 gosu www-data php artisan config:cache
 gosu www-data php artisan route:cache
 
-# Switch to www-data user and run the default command
-exec gosu www-data "$@"
+# Run the default command
+# PHP-FPM will switch to www-data user internally via its pool configuration
+exec "$@"

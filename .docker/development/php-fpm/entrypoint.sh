@@ -1,19 +1,19 @@
 #!/bin/sh
 set -e
 
-# Check if $UID and $GID are set, else fallback to default (1000:1000)
-USER_ID=${UID:-1000}
-GROUP_ID=${GID:-1000}
-
-# Fix file ownership and permissions using the passed UID and GID
-echo "Fixing file permissions with UID=${USER_ID} and GID=${GROUP_ID}..."
-chown -R ${USER_ID}:${GROUP_ID} /var/www || echo "Some files could not be changed"
+# No need to change permissions, container runs as www user with correct UID/GID
 
 # Clear configurations to avoid caching issues in development
 echo "Clearing configurations..."
-su www -c "php artisan config:clear"
-su www -c "php artisan route:clear"
-su www -c "php artisan view:clear"
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
 
-# Run the default command (e.g., php-fpm or bash)
-exec "$@"
+# Run the default command
+if [ "$1" = "php-fpm" ]; then
+    # php-fpm handles user switching internally based on config
+    exec "$@"
+else
+    # For other commands (like artisan queue:work), run directly as current user
+    exec "$@"
+fi

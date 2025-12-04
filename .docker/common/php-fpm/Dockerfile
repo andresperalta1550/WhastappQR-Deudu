@@ -140,9 +140,6 @@ RUN if [ "${XDEBUG_ENABLED}" = "true" ]; then \
     echo "xdebug.start_with_request=yes" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini ; \
 fi
 
-# Install gosu for user switching in entrypoint (required to switch from root to www)
-RUN apt-get update && apt-get install -y --no-install-recommends gosu && rm -rf /var/lib/apt/lists/*
-
 # Add ARGs for syncing permissions
 ARG UID=1000
 ARG GID=1000
@@ -169,8 +166,8 @@ WORKDIR /var/www
 COPY ./.docker/development/php-fpm/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Start as root to allow entrypoint to fix permissions, then switch to www via gosu
-USER root
+# Switch back to the non-privileged user to run the application
+USER www-data
 
 # Change the default command to run the entrypoint script
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

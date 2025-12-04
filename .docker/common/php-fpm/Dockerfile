@@ -62,7 +62,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libzip-dev \
     libfcgi-bin \
     procps \
+    wget \
+    ca-certificates \
     && apt-get autoremove -y && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Install gosu for switching users (Debian equivalent of su-exec)
+RUN set -eux; \
+    dpkgArch="$(dpkg --print-architecture | awk -F- '{ print $NF }')"; \
+    wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/1.17/gosu-$dpkgArch"; \
+    chmod +x /usr/local/bin/gosu; \
+    gosu --version; \
+    gosu nobody true
 
 # Download and install php-fpm health check script
 RUN curl -o /usr/local/bin/php-fpm-healthcheck \
@@ -106,9 +116,6 @@ WORKDIR /var/www
 
 # Ensure correct permissions
 RUN chown -R www-data:www-data /var/www
-
-# Switch to the non-privileged user to run the application
-USER www-data
 
 # Change the default command to run the entrypoint script
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

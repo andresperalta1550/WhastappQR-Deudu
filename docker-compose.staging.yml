@@ -1,6 +1,8 @@
 services:
   web:
-    image: nginx:latest # Using the default Nginx image with custom configuration.
+    build:
+      context: .
+      dockerfile: ./.docker/staging/nginx/Dockerfile
     volumes:
       # Mount the 'laravel-storage' volume to '/var/www/storage' inside the container.
       # -----------------------------------------------------------
@@ -68,4 +70,3 @@ services:
 
 networks:
   dokploy-network:
-    external: true

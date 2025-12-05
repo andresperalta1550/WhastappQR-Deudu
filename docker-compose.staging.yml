@@ -11,13 +11,9 @@ services:
       # The 'php-fpm' service mounts the same volume without ':ro' to allow write operations.
       # -----------------------------------------------------------
       - ../files/laravel-storage-staging:/var/www/storage:ro
-    labels:
-      # Traefik configuration for Dokploy
-      - "traefik.enable=true"
-      - "traefik.http.routers.whatsapp-qr.rule=Host(`whatsappqr-test.deudu.co`)"
-      - "traefik.http.routers.whatsapp-qr.entrypoints=websecure"
-      - "traefik.http.routers.whatsapp-qr.tls.certresolver=letsencrypt"
-      - "traefik.http.services.whatsapp-qr.loadbalancer.server.port=80"
+    ports:
+      - "80:80"
+      - "443:443"
     networks:
       - dokploy-network
     depends_on:

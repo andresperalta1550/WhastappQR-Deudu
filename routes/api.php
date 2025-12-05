@@ -23,7 +23,7 @@ Route::prefix('v1')->group(function () {
         /**
          * Put coordination id to channel
          */
-        Route::put('/{channel}/coordination-id', [\App\Http\Controllers\Api\V1\Channel\PutCoordinationIdToChannelController::class, '__invoke']);
+        Route::put('/{channel}', [\App\Http\Controllers\Api\V1\Channel\PutChannelController::class, '__invoke']);
     });
 
     Route::prefix('messages')->group(function () {

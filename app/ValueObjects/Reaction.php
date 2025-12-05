@@ -61,7 +61,7 @@ class Reaction implements \JsonSerializable
         return [
             'emoji' => $this->emoji,
             'reaction_phone_number' => $this->reactorPhoneNumber,
-            'created_at' => $this->createdAt?->toISOString(),
+            'created_at' => $this->createdAt?->toDateTime(),
         ];
     }
 

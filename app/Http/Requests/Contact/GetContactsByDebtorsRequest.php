@@ -26,7 +26,7 @@ class GetContactsByDebtorsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'debtor_ids' => 'required|integer',
+            'debtor_ids' => 'required|string',
             'per_page' => 'sometimes|integer|min:1|max:100',
             'page' => 'sometimes|integer|min:1'
         ];

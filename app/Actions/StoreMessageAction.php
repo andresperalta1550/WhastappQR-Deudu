@@ -32,9 +32,12 @@ class StoreMessageAction
 
         $response = $client->sendMessage($textMessageToSend);
 
-        if (isset($response['status']) && $response['status'] === 'error') {
+        if (isset($response['error']) && $response['error'] === true) {
+            if (isset($response['error_message']) && str_contains($response['error_message'], 'to_number')) {
+                throw new BadRequestException("El número de teléfono no es válido.");
+            }
             throw new ExternalServiceException(
-                "Error al enviar el mensaje: " . ($response['message'] ?? 'Desconocido'),
+                "Error al enviar el mensaje: " . ($response['error_message'] ?? 'Desconocido'),
                 502,
                 '2Chat API'
             );

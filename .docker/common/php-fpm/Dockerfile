@@ -56,6 +56,7 @@ FROM php:8.4-fpm AS production
 
 # Install only runtime libraries needed in production
 # libfcgi-bin and procps are required for the php-fpm-healthcheck script
+# cron is required for the worker service to run Laravel scheduler
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     libicu-dev \
@@ -64,6 +65,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     procps \
     wget \
     ca-certificates \
+    cron \
     && apt-get autoremove -y && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Install gosu for switching users (Debian equivalent of su-exec)
@@ -82,6 +84,10 @@ RUN curl -o /usr/local/bin/php-fpm-healthcheck \
 # Copy the initialization script
 COPY ./.docker/production/php-fpm/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# Copy the worker entrypoint script
+COPY ./.docker/common/worker/entrypoint.sh /usr/local/bin/worker-entrypoint.sh
+RUN chmod +x /usr/local/bin/worker-entrypoint.sh
 
 # Copy the initial storage structure
 COPY ./storage /var/www/storage-init

@@ -42,4 +42,4 @@ cron
 # We use gosu to run it as www-data for security
 # -----------------------------------------------------------
 echo "Starting queue worker with command: $@"
-exec gosu www-data sh -c "cd /var/www && $@"
+exec gosu www-data $@

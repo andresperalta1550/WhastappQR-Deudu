@@ -44,7 +44,7 @@ class StatusChannelEvent extends WebhookEvent
             return;
         }
 
-        $channel->setConnectionStatus($this->eventType === 'disconnected' ? 'D' : 'C');
+        $channel->setConnectionStatus($this->eventType === 'ready' ? 'C' : 'D');
         $channel->setLastStatusEvent(
             new LastStatusEvent(
                 $this->eventType,

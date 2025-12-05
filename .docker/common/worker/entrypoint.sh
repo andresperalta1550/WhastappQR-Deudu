@@ -21,7 +21,7 @@ rm -rf /var/www/storage-init
 # Create a crontab entry that runs Laravel's scheduler every minute
 # -----------------------------------------------------------
 echo "Setting up Laravel scheduler cron job..."
-echo "* * * * * cd /var/www && php artisan schedule:run >> /dev/null 2>&1" > /etc/cron.d/laravel-scheduler
+echo "* * * * * cd /var/www && /usr/local/bin/php artisan schedule:run >> /dev/null 2>&1" > /etc/cron.d/laravel-scheduler
 
 # Give execution rights on the cron job
 chmod 0644 /etc/cron.d/laravel-scheduler

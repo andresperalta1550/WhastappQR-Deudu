@@ -41,5 +41,5 @@ cron
 # This will be the queue:work command specified in docker-compose
 # We use gosu to run it as www-data for security
 # -----------------------------------------------------------
-echo "Starting queue worker..."
-exec gosu www-data "$@"
+echo "Starting queue worker with command: $@"
+exec gosu www-data $@

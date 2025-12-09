@@ -6,6 +6,8 @@ use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Symfony\Component\HttpFoundation\Response;
+use App\Rules\Unique;
+use App\Models\Channel;
 
 class PutChannelRequest extends FormRequest
 {
@@ -26,7 +28,18 @@ class PutChannelRequest extends FormRequest
     {
         return [
             'coordination_id' => 'required|int',
-            'priority' => 'required|integer|min:1|max:10',
+            'priority' => [
+                'required',
+                'integer',
+                'min:1',
+                'max:10',
+                new Unique(
+                    Channel::class,
+                    'priority',
+                    ['coordination_id' => $this->coordination_id],
+                    $this->route('channel') // Ignore the current record
+                )
+            ]
         ];
     }
 
@@ -43,6 +56,7 @@ class PutChannelRequest extends FormRequest
             'priority.integer' => 'La prioridad debe ser un número entero',
             'priority.min' => 'La prioridad debe ser al menos 1',
             'priority.max' => 'La prioridad no puede ser mayor a 10',
+            'priority.unique' => 'La prioridad debe ser única, ya existe un canal con la misma prioridad'
         ];
     }
 

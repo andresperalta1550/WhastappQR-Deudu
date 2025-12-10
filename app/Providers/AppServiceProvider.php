@@ -22,6 +22,13 @@ class AppServiceProvider extends ServiceProvider
                 );
             }
         );
+
+        $this->app->bind(
+            \App\Services\Excel\ExportService::class,
+            function ($app) {
+                return new \App\Services\Excel\ExportService();
+            }
+        );
     }
 
     /**

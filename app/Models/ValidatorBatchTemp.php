@@ -15,6 +15,11 @@ class ValidatorBatchTemp extends Model
 {
     use HasFactory, SoftDeletes;
 
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_PROCESSING = 'processing';
+    public const STATUS_COMPLETED = 'completed';
+    public const STATUS_FAILED = 'failed';
+
     /**
      * @var string $collection The name of the collection.
      */
@@ -34,19 +39,18 @@ class ValidatorBatchTemp extends Model
         'data',
         'status',
         'errors',
-        'created_at',
-        'updated_at'
+        'validation_result',
+        'processed_at'
     ];
 
     /**
      * @var array $casts The attributes that should be cast to native types.
      */
     protected $casts = [
-        'data' => 'array',
-        'errors' => 'array',
         'row_number' => 'integer',
         'status' => 'string',
-        'batch_id' => AsObjectId::class
+        'batch_id' => AsObjectId::class,
+        'processed_at' => 'datetime',
     ];
 
     /**
@@ -77,6 +81,16 @@ class ValidatorBatchTemp extends Model
     public function getData(): array
     {
         return $this->data;
+    }
+
+    /**
+     * Get the validation result.
+     *
+     * @return array
+     */
+    public function getValidationResult(): array
+    {
+        return $this->validation_result;
     }
 
     /**

@@ -65,10 +65,17 @@ Route::prefix('v1')->group(function () {
     });
 
     Route::prefix('batches')->group(function () {
-        /**
-         * Create a batch validator numbers
-         */
-        Route::post('/validator-numbers', [\App\Http\Controllers\Api\V1\ValidatorBatch\CreateValidatorBatchController::class, '__invoke']);
+        Route::prefix('validator-numbers')->group(function () {
+            /**
+             * Create a batch validator numbers
+             */
+            Route::post('/', [\App\Http\Controllers\Api\V1\ValidatorBatch\CreateValidatorBatchController::class, '__invoke']);
+
+            /**
+             * Approve a batch validator numbers
+             */
+            Route::put('/{batch}/approve', [\App\Http\Controllers\Api\V1\ValidatorBatch\ApproveValidatorBatchController::class, '__invoke']);
+        });
     });
 });
 

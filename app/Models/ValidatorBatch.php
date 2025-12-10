@@ -13,6 +13,10 @@ class ValidatorBatch extends Model
 {
     use HasFactory, SoftDeletes;
 
+    public const STATUS_PENDING = "pending";
+    public const STATUS_IN_PROCESS = "in_process";
+    public const STATUS_VALIDATED = "validated";
+    public const STATUS_REJECTED = "rejected";
     /**
      * @var string $collection The name of the collection.
      */

@@ -63,5 +63,12 @@ Route::prefix('v1')->group(function () {
          */
         Route::get('/summary/by-debtors', [\App\Http\Controllers\Api\V1\Contact\GetSummaryByDebtorsController::class, '__invoke']);
     });
+
+    Route::prefix('batches')->group(function () {
+        /**
+         * Create a batch validator numbers
+         */
+        Route::post('/validator-numbers', [\App\Http\Controllers\Api\V1\ValidatorBatch\CreateValidatorBatchController::class, '__invoke']);
+    });
 });
 

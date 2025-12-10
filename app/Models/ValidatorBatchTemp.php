@@ -7,6 +7,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use MongoDB\Laravel\Eloquent\Model;
 use MongoDB\Laravel\Eloquent\SoftDeletes;
 
+/**
+ * This model is used to store the temporary data of the validator batch.
+ * It is not used for any other purpose.
+ */
 class ValidatorBatchTemp extends Model
 {
     use HasFactory, SoftDeletes;

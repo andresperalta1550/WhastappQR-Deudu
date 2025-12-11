@@ -68,7 +68,6 @@ class ProcessValidatorBatchJob implements ShouldQueue
             }
 
             // Validate if the phone number is valid
-
             $validationResult = $this->validatePhoneNumber($phoneNumber, $batch);
 
             // Update the register with the result
@@ -149,8 +148,12 @@ class ProcessValidatorBatchJob implements ShouldQueue
     }
     private function validatePhoneNumber(string $phoneNumber, ValidatorBatch $batch): array
     {
-        $coordinationId = (new User())->find($batch->getCreatedBy())?->getCoordinationId();
-        $client = Client::makeByCoordinationId($coordinationId);
+        // We create the client with the phone number of the batch
+        // the parameters in null is because the client is created with
+        // environment variables for default values
+        $client = new Client(
+            phoneNumber: $batch->getPhoneNumber()
+        );
         return $client->checkNumber($phoneNumber);
     }
 }

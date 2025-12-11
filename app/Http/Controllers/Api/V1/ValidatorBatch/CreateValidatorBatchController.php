@@ -23,15 +23,6 @@ class CreateValidatorBatchController extends Controller
             // Generate the consecutive for the batch
             $consecutive = (new ValidatorBatchTemp())->generateConsecutive();
 
-            // Verify if the user have coordination
-            // $user = (new User())->find($request->getCreatedBy())?->getCoordinationId();
-            // if (!$user) {
-            //     return response()->json([
-            //         'success' => false,
-            //         'message' => 'El usuario no tiene una coordinación asignada',
-            //     ], Response::HTTP_BAD_REQUEST);
-            // }
-
             // Create the validator batch
             $batch = (new ValidatorBatch())
                 ->create([
@@ -40,7 +31,8 @@ class CreateValidatorBatchController extends Controller
                     'total_records' => 0,
                     'processed_records' => 0,
                     'created_by' => $request->getCreatedBy(),
-                    'created_at' => now()
+                    'created_at' => now(),
+                    'phone_number' => $request->getPhoneNumber()
                 ]);
 
             // Process the excel file

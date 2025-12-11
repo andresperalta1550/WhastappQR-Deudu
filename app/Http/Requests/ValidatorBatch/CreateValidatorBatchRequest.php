@@ -27,6 +27,7 @@ class CreateValidatorBatchRequest extends FormRequest
         return [
             'file' => 'required|file|mimes:xlsx,xls',
             'created_by' => 'required|exists:App\Models\User,id',
+            'phone_number' => 'required|string',
         ];
     }
 
@@ -43,6 +44,8 @@ class CreateValidatorBatchRequest extends FormRequest
             'file.required' => 'El campo file es obligatorio.',
             'file.file' => 'El campo file debe ser un archivo.',
             'file.mimes' => 'El campo file debe ser un archivo con extensión .xlsx o .xls.',
+            'phone_number.required' => 'El campo phone_number es obligatorio.',
+            'phone_number.string' => 'El campo phone_number debe ser una cadena de caracteres.',
         ];
     }
 
@@ -73,5 +76,15 @@ class CreateValidatorBatchRequest extends FormRequest
     public function getCreatedBy(): int
     {
         return $this->validated('created_by');
+    }
+
+    /**
+     * Get the phone number.
+     * 
+     * @return string
+     */
+    public function getPhoneNumber(): string
+    {
+        return $this->validated('phone_number');
     }
 }

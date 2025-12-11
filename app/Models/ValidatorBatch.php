@@ -40,6 +40,7 @@ class ValidatorBatch extends Model
         'total_numbers',
         'processed_numbers',
         'file_path',
+        'phone_number'
     ];
 
     /**
@@ -56,6 +57,7 @@ class ValidatorBatch extends Model
         'total_numbers' => 'integer',
         'processed_numbers' => 'integer',
         'file_path' => 'string',
+        'phone_number' => 'string'
     ];
 
     /**
@@ -154,6 +156,16 @@ class ValidatorBatch extends Model
     public function setFilePath(string $value): void
     {
         $this->file_path = $value;
+    }
+
+    public function getPhoneNumber(): string
+    {
+        return $this->phone_number;
+    }
+
+    public function setPhoneNumber(string $value): void
+    {
+        $this->phone_number = $value;
     }
 
     /**

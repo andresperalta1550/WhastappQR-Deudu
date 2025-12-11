@@ -67,6 +67,10 @@ Route::prefix('v1')->group(function () {
     Route::prefix('batches')->group(function () {
         Route::prefix('validator-numbers')->group(function () {
             /**
+             * Get all validator batches
+             */
+            Route::get('/', [\App\Http\Controllers\Api\V1\ValidatorBatch\GetValidatorBatchsController::class, '__invoke']);
+            /**
              * Create a batch validator numbers
              */
             Route::post('/', [\App\Http\Controllers\Api\V1\ValidatorBatch\CreateValidatorBatchController::class, '__invoke']);

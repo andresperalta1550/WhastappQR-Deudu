@@ -155,4 +155,96 @@ class ValidatorBatch extends Model
     {
         $this->file_path = $value;
     }
+
+    /**
+     * Get paginated validator batches with user information resolved.
+     *
+     * @param int $perPage
+     * @param int $page
+     * @param string|null $sortBy
+     * @param string $sortOrder
+     * @param string|null $search
+     * @return array
+     */
+    public static function getPaginatedWithUsers(
+        int $perPage = 15,
+        int $page = 1,
+        ?string $sortBy = null,
+        string $sortOrder = 'desc',
+        ?string $search = null
+    ): array {
+        $query = self::query();
+
+        // Apply search filter if provided
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('consecutive', 'like', "%{$search}%")
+                    ->orWhere('status', 'like', "%{$search}%");
+            });
+        }
+
+        // Apply sorting
+        if ($sortBy) {
+            $query->orderBy($sortBy, $sortOrder);
+        } else {
+            $query->orderBy('created_at', $sortOrder);
+        }
+
+        // Get paginated results
+        $paginator = $query->paginate($perPage, ['*'], 'page', $page);
+
+        // Extract unique user IDs
+        $userIds = collect();
+        foreach ($paginator->items() as $batch) {
+            if ($batch->created_by) {
+                $userIds->push($batch->created_by);
+            }
+            if ($batch->approved_by) {
+                $userIds->push($batch->approved_by);
+            }
+        }
+
+        // Get unique user IDs and fetch users in one query
+        $userIds = $userIds->unique()->filter()->values()->toArray();
+        $users = User::whereIn('id', $userIds)->get()->keyBy('id');
+
+        // Transform items with user information
+        $items = collect($paginator->items())->map(function ($batch) use ($users) {
+            $batchArray = $batch->toArray();
+
+            // Replace created_by with user fullname
+            if (isset($batchArray['created_by']) && $users->has($batchArray['created_by'])) {
+                $batchArray['created_by_fullname'] = $users->get($batchArray['created_by'])->getFullname();
+                $batchArray['created_by_id'] = $batchArray['created_by'];
+                unset($batchArray['created_by']);
+            }
+
+            // Replace approved_by with user fullname
+            if (isset($batchArray['approved_by']) && $users->has($batchArray['approved_by'])) {
+                $batchArray['approved_by_fullname'] = $users->get($batchArray['approved_by'])->getFullname();
+                $batchArray['approved_by_id'] = $batchArray['approved_by'];
+                unset($batchArray['approved_by']);
+            }
+
+            return $batchArray;
+        });
+
+        return [
+            'items' => $items,
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'from' => $paginator->firstItem(),
+                'last_page' => $paginator->lastPage(),
+                'per_page' => $paginator->perPage(),
+                'to' => $paginator->lastItem(),
+                'total' => $paginator->total(),
+            ],
+            'links' => [
+                'first' => $paginator->url(1),
+                'last' => $paginator->url($paginator->lastPage()),
+                'prev' => $paginator->previousPageUrl(),
+                'next' => $paginator->nextPageUrl(),
+            ],
+        ];
+    }
 }

@@ -26,7 +26,8 @@ class User extends Model
     protected $visible = [
         'id',
         'name',
-        'lastname'
+        'lastname',
+        'coordination_id'
     ];
 
     /**
@@ -67,5 +68,10 @@ class User extends Model
     public function getFullname(): string
     {
         return $this->name . ' ' . $this->lastname;
+    }
+
+    public function getCoordinationId(): int
+    {
+        return $this->coordination_id;
     }
 }

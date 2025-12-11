@@ -64,4 +64,14 @@ class CreateValidatorBatchRequest extends FormRequest
             ], Response::HTTP_BAD_REQUEST)
         );
     }
+
+    /**
+     * Get the created by user.
+     * 
+     * @return int
+     */
+    public function getCreatedBy(): int
+    {
+        return $this->validated('created_by');
+    }
 }

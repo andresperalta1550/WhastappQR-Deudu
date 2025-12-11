@@ -2,6 +2,8 @@
 
 namespace App\Jobs;
 
+use App\Models\User;
+use App\Libraries\Whatsapp\Client;
 use App\Models\ValidatorBatchTemp;
 use App\Models\ValidatorBatch;
 use App\Services\Excel\ExportDTO as ExcelExportDTO;
@@ -44,6 +46,10 @@ class ProcessValidatorBatchJob implements ShouldQueue
             ->take($this->limit)
             ->get();
 
+        // Always search if the batch exists
+        $batch = (new ValidatorBatch())
+            ->findOrFail($this->batchId);
+
         foreach ($records as $record) {
             // Mark with processing status
             $record->update([
@@ -62,7 +68,8 @@ class ProcessValidatorBatchJob implements ShouldQueue
             }
 
             // Validate if the phone number is valid
-            $validationResult = $this->validatePhoneNumber($phoneNumber);
+
+            $validationResult = $this->validatePhoneNumber($phoneNumber, $batch);
 
             // Update the register with the result
             $record->update([
@@ -71,9 +78,6 @@ class ProcessValidatorBatchJob implements ShouldQueue
                 'processed_at' => now()
             ]);
         }
-
-        $batch = (new ValidatorBatch())
-            ->findOrFail($this->batchId);
 
         // Verify if all records have been processed
         if ($this->checkBatchCompletion($batch)) {
@@ -103,14 +107,21 @@ class ProcessValidatorBatchJob implements ShouldQueue
         $data = [];
         foreach ($records as $record) {
             $validationResult = $record->getValidationResult() ?? [];
-            $phoneNumber = $validationResult['celular'] ?? null;
-            $isValid = $validationResult['isValid'] ?? false;
-            $reason = $validationResult['reason'] ?? null;
+            if (!$validationResult['is_valid']) {
+                $data[] = [
+                    $record->getData()['celular'] ?? $record->getData()['telefono'] ?? null,
+                    'NO',
+                    'El número de télefono no es valido.'
+                ];
+                continue;
+            }
+            $phoneNumber = $record->getData()['celular'] ?? $record->getData()['telefono'] ?? null;
+            $isValid = $validationResult['on_whatsapp'] ?? false;
 
             $data[] = [
                 $phoneNumber,
                 $isValid ? 'SI' : 'NO',
-                $reason
+                !$isValid ? 'El número no se encuentra en whatsapp' : null
             ];
         }
 
@@ -136,34 +147,10 @@ class ProcessValidatorBatchJob implements ShouldQueue
 
         return $completedRecords === $batch->getTotalNumbers();
     }
-    private function validatePhoneNumber(string $phoneNumber): array
+    private function validatePhoneNumber(string $phoneNumber, ValidatorBatch $batch): array
     {
-        // Simulación de respuesta
-        $isValid = $this->mockValidation($phoneNumber);
-        $reason = $isValid ? null : $this->getMockReason();
-
-        return [
-            'phoneNumber' => $phoneNumber,
-            'isValid' => $isValid,
-            'reason' => $reason
-        ];
-    }
-
-    private function mockValidation(string $phoneNumber): bool
-    {
-        // Mock: 80% de números válidos
-        return rand(1, 100) <= 80;
-    }
-
-    private function getMockReason(): string
-    {
-        $reasons = [
-            'Número fuera de servicio',
-            'Formato inválido',
-            'Número no existe',
-            'Operador no disponible'
-        ];
-
-        return $reasons[array_rand($reasons)];
+        $coordinationId = (new User())->find($batch->getCreatedBy())?->getCoordinationId();
+        $client = Client::makeByCoordinationId($coordinationId);
+        return $client->checkNumber($phoneNumber);
     }
 }

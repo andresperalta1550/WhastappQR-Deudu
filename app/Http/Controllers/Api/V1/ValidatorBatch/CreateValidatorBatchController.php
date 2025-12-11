@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1\ValidatorBatch;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ValidatorBatch\CreateValidatorBatchRequest;
+use App\Models\User;
 use App\Models\ValidatorBatchTemp;
 use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -22,6 +23,15 @@ class CreateValidatorBatchController extends Controller
             // Generate the consecutive for the batch
             $consecutive = (new ValidatorBatchTemp())->generateConsecutive();
 
+            // Verify if the user have coordination
+            // $user = (new User())->find($request->getCreatedBy())?->getCoordinationId();
+            // if (!$user) {
+            //     return response()->json([
+            //         'success' => false,
+            //         'message' => 'El usuario no tiene una coordinación asignada',
+            //     ], Response::HTTP_BAD_REQUEST);
+            // }
+
             // Create the validator batch
             $batch = (new ValidatorBatch())
                 ->create([
@@ -29,7 +39,7 @@ class CreateValidatorBatchController extends Controller
                     'status' => 'pending',
                     'total_records' => 0,
                     'processed_records' => 0,
-                    'created_by' => $request->created_by,
+                    'created_by' => $request->getCreatedBy(),
                     'created_at' => now()
                 ]);
 

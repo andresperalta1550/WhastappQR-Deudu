@@ -3,64 +3,42 @@
 namespace App\Http\Controllers\Api\V1\Message;
 
 use App\Http\Controllers\Controller;
-use App\Models\Message;
-use Illuminate\Http\Request;
+use App\Http\Requests\PaginationRequest;
 use Illuminate\Support\Facades\Log;
+use App\Models\Message;
 
-class GetMessagesByDebtorController extends Controller
+class GetMessagesByRemothePhoneNumberController extends Controller
 {
     public function __invoke(
-        int $debtorId,
-        Request $request
+        string $remotePhoneNumber,
+        PaginationRequest $request
     ): \Illuminate\Http\JsonResponse {
-        $perPage = 10; // Number of messages per page
-        $page = $request->get('page', 1);
+        $perPage = $request->getPerPage();
+        $page = $request->getPage();
 
-        // We paginate the messages for better performance
-        $query = Message::query()
-            ->where('debtor_id', $debtorId)
+        if (!str_contains($remotePhoneNumber, '+')) {
+            $remotePhoneNumber = '+' . $remotePhoneNumber;
+        }
+
+        $query = (new Message())
+            ->where('remote_phone_number', $remotePhoneNumber)
             ->orderBy('delivery.sent_at', 'desc');
 
         $paginator = $query->paginate($perPage, ['*'], 'page', $page);
 
         $messages = collect($paginator->items());
 
-        // We group based on changes in remote_phone_number or channel_phone_number
-        $groups = [];
-        $currentGroup = [];
-        $lastRemotePhoneNumber = null;
-        $lastChannelPhoneNumber = null;
-
         foreach ($messages as $message) {
-            if (
-                $message->getRemotePhoneNumber() !== $lastRemotePhoneNumber ||
-                $message->getChannelPhoneNumber() !== $lastChannelPhoneNumber
-            ) {
-                if (!empty($currentGroup)) {
-                    $groups[] = $currentGroup;
-                }
-                $currentGroup = [];
-            }
-            // Set last seen values
             $message->setInternalRead(true);
             $message->setInternalReadAt(\Carbon\Carbon::now());
-
-            $currentGroup[] = $message;
             $message->save();
-            $lastRemotePhoneNumber = $message->getRemotePhoneNumber();
-            $lastChannelPhoneNumber = $message->getChannelPhoneNumber();
-
         }
 
-        $this->updateUnreadMessagesCount($debtorId);
-
-        if (!empty($currentGroup)) {
-            $groups[] = $currentGroup;
-        }
+        $this->updateUnreadMessagesCount($remotePhoneNumber);
 
         return response()->json([
             'success' => true,
-            'data' => $groups,
+            'data' => $messages,
             'pagination' => [
                 'current_page' => $paginator->currentPage(),
                 'last_page' => $paginator->lastPage(),
@@ -77,11 +55,11 @@ class GetMessagesByDebtorController extends Controller
      * @return void
      */
     private function updateUnreadMessagesCount(
-        int $debtorId
+        string $remotePhoneNumber
     ): void {
         // Search the contact
         $contact = (new \App\Models\Contact())
-            ->where('debtor_id', $debtorId)
+            ->where('remote_phone_number', $remotePhoneNumber)
             ->first();
 
         // If contact is found, increment the inbound message count
@@ -96,4 +74,3 @@ class GetMessagesByDebtorController extends Controller
         }
     }
 }
-

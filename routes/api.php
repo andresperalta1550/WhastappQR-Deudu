@@ -31,6 +31,11 @@ Route::prefix('v1')->group(function () {
          * Post a message
          */
         Route::post('/', [\App\Http\Controllers\Api\V1\Message\PostMessageController::class, '__invoke']);
+
+        /**
+         * Get messages by remote phone number
+         */
+        Route::get('/{remotePhoneNumber}', [\App\Http\Controllers\Api\V1\Message\GetMessagesByRemothePhoneNumberController::class, '__invoke']);
     });
 
     Route::prefix('webhook')->group(function () {

@@ -40,7 +40,8 @@ class Contact extends Model
         'whatsapp_info',
         'unread_messages',
         'last_messages_events',
-        'last_message'
+        'last_message',
+        'is_resolved'
     ];
 
     /**
@@ -55,6 +56,7 @@ class Contact extends Model
         'debtor_link_last_checked_at' => 'datetime',
         'on_whatsapp' => 'boolean',
         'unread_messages' => 'integer',
+        'is_resolved' => 'boolean',
 
         // Complex fields
         'normalized_number' => \App\Casts\NormalizedNumberCast::class,
@@ -226,5 +228,15 @@ class Contact extends Model
     public function setChannelPhoneNumber(?string $value): void
     {
         $this->channel_phone_number = $value;
+    }
+
+    public function isResolved(): bool
+    {
+        return $this->is_resolved ?? false;
+    }
+
+    public function setIsResolved(bool $value): void
+    {
+        $this->is_resolved = $value;
     }
 }

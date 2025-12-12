@@ -68,7 +68,7 @@ class Channel extends Model
         'coordination_id' => 'integer',
 
         // Complex fields
-        'last_status_event' =>  \App\Casts\LastStatusEventCast::class
+        'last_status_event' => \App\Casts\LastStatusEventCast::class
     ];
 
     /**
@@ -85,7 +85,8 @@ class Channel extends Model
      *
      * @return string|null
      */
-    public function getChannelUuid(): ?string {
+    public function getChannelUuid(): ?string
+    {
         return $this->channel_uuid;
     }
 

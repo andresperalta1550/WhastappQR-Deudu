@@ -72,6 +72,11 @@ Route::prefix('v1')->group(function () {
          * Summary contacts by coordination ID
          */
         Route::get('/summary/by-coordination', [\App\Http\Controllers\Api\V1\Contact\GetSummaryConversationsController::class, '__invoke']);
+
+        /**
+         * Mark contact as resolved
+         */
+        Route::post('/{contact}/mark-as-resolved', [\App\Http\Controllers\Api\V1\Contact\MarkAsResolvedController::class, '__invoke']);
     });
 
     Route::prefix('batches')->group(function () {

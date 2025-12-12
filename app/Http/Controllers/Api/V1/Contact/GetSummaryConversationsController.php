@@ -35,16 +35,24 @@ class GetSummaryConversationsController extends Controller
             ->pluck('phone_number')
             ->toArray();
 
-        $matchStage = [
-            '$match' => [
-                '$or' => [
-                    ['debtor_id' => ['$in' => $debtorIds]],
-                    [
-                        'debtor_id' => null,
-                        'channel_phone_number' => ['$in' => $channelPhoneNumbers]
-                    ]
+        $matchConditions = [
+            '$or' => [
+                ['debtor_id' => ['$in' => $debtorIds]],
+                [
+                    'debtor_id' => null,
+                    'channel_phone_number' => ['$in' => $channelPhoneNumbers]
                 ]
             ]
+        ];
+
+        // Filter by is_resolved if provided
+        $isResolved = $request->getIsResolved();
+        if ($isResolved !== null) {
+            $matchConditions['is_resolved'] = $isResolved;
+        }
+
+        $matchStage = [
+            '$match' => $matchConditions
         ];
 
         // Pagination skip

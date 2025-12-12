@@ -28,7 +28,8 @@ class GetSummaryConversationsRequest extends FormRequest
         return [
             'coordination_id' => 'required|integer|min:1',
             'per_page' => 'sometimes|integer|min:1|max:100',
-            'page' => 'sometimes|integer|min:1'
+            'page' => 'sometimes|integer|min:1',
+            'is_resolved' => 'sometimes|boolean'
         ];
     }
 
@@ -48,6 +49,7 @@ class GetSummaryConversationsRequest extends FormRequest
             'per_page.max' => 'El parámetro per_page no puede ser mayor a 100',
             'page.integer' => 'El parámetro page debe ser un número entero',
             'page.min' => 'El parámetro page debe ser al menos 1',
+            'is_resolved.boolean' => 'El parámetro is_resolved debe ser verdadero o falso',
         ];
     }
 
@@ -62,6 +64,7 @@ class GetSummaryConversationsRequest extends FormRequest
             'coordination_id' => 'ID de coordinación',
             'per_page' => 'elementos por página',
             'page' => 'número de página',
+            'is_resolved' => 'estado de resolución',
         ];
     }
 
@@ -83,6 +86,22 @@ class GetSummaryConversationsRequest extends FormRequest
     public function getPerPage(): int
     {
         return (int) $this->query('per_page', 15);
+    }
+
+    /**
+     * Get the is_resolved filter from the request.
+     *
+     * @return bool|null
+     */
+    public function getIsResolved(): ?bool
+    {
+        $value = $this->query('is_resolved');
+
+        if ($value === null) {
+            return null;
+        }
+
+        return filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
     }
 
     /**

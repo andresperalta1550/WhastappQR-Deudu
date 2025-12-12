@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api\V1\Message;
 
 use App\Http\Controllers\Controller;
 use App\Models\Message;
-use App\ValueObjects\LastMessage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -79,8 +78,7 @@ class GetMessagesByDebtorController extends Controller
      */
     private function updateUnreadMessagesCount(
         int $debtorId
-    ): void
-    {
+    ): void {
         // Search the contact
         $contact = (new \App\Models\Contact())
             ->where('debtor_id', $debtorId)

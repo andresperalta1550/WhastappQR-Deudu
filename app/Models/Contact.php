@@ -29,6 +29,7 @@ class Contact extends Model
      */
     protected $fillable = [
         'remote_phone_number',
+        'channel_phone_number',
         'normalized_number',
         'debtor_id',
         'debtor_link_source',
@@ -48,6 +49,7 @@ class Contact extends Model
     protected $casts = [
         // Simple fields
         'remote_phone_number' => 'string',
+        'channel_phone_number' => 'string',
         'debtor_id' => 'integer',
         'debtor_link_source' => 'string',
         'debtor_link_last_checked_at' => 'datetime',
@@ -214,5 +216,15 @@ class Contact extends Model
     public function setLastMessage(\App\ValueObjects\LastMessage $value): void
     {
         $this->last_message = $value;
+    }
+
+    public function getChannelPhoneNumber(): ?string
+    {
+        return $this->channel_phone_number;
+    }
+
+    public function setChannelPhoneNumber(?string $value): void
+    {
+        $this->channel_phone_number = $value;
     }
 }

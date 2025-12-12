@@ -4,13 +4,7 @@ services:
       context: .
       dockerfile: ./.docker/staging/nginx/Dockerfile
     volumes:
-      # Mount the 'laravel-storage' volume to '/var/www/storage' inside the container.
-      # -----------------------------------------------------------
-      # This volume stores persistent data like uploaded files and cache.
-      # The ':ro' option mounts it as read-only in the 'web' service because Nginx only needs to read these files.
-      # The 'php-fpm' service mounts the same volume without ':ro' to allow write operations.
-      # -----------------------------------------------------------
-      - ../files/laravel-storage-staging:/var/www/storage:ro
+      - ../files/laravel-storage-staging:/var/www/storage
     ports:
       - "80:80"
     networks:

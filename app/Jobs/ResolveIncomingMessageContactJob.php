@@ -169,6 +169,7 @@ class ResolveIncomingMessageContactJob implements ShouldQueue
 
             $contact->setRemotePhoneNumber($this->event->remotePhoneNumber);
             $contact->setChannelPhoneNumber($this->event->channelPhoneNumber);
+            $contact->setIsResolved(false);
 
             $contact->setOnWhatsapp($responseCheckNumber['on_whatsapp'] ?? false);
 

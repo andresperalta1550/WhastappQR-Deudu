@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1\Contact;
 
 use App\Http\Controllers\Controller;
+use App\Models\Contact;
 use Illuminate\Http\Request;
 
 class GetSummaryConversationsController extends Controller
@@ -22,46 +23,85 @@ class GetSummaryConversationsController extends Controller
     {
         $coordinationId = $request->getCoordinationId();
         $perPage = $request->getPerPage();
+        $page = max(1, (int) $request->get('page', 1));
 
-        // 1. Obtain all debtors that belong to this coordination
-        $debtors = \App\Models\Debtor::where('coordinator_id', $coordinationId)->get();
-        $debtorIds = $debtors->pluck('id')->toArray();
+        // 1. Obtain debtors
+        $debtorIds = \App\Models\Debtor::where('coordinator_id', $coordinationId)
+            ->pluck('id')
+            ->toArray();
 
-        // 2. Obtain all channels that belong to this coordination
-        $channels = \App\Models\Channel::where('coordination_id', $coordinationId)->get();
-        $channelPhoneNumbers = $channels->pluck('phone_number')->toArray();
+        // 2. Obtain channels
+        $channelPhoneNumbers = \App\Models\Channel::where('coordination_id', $coordinationId)
+            ->pluck('phone_number')
+            ->toArray();
 
-        // 3. Build the query to filter contacts
-        // If they have debtor_id in the list of debtors, or if they don't have debtor_id
-        // but their remote_phone_number is in the channels of the coordination
-        $contacts = \App\Models\Contact::query()
-            ->where(function ($query) use ($debtorIds, $channelPhoneNumbers) {
-                // Filter by debtor_id if it is in the list of debtors
-                if (!empty($debtorIds)) {
-                    $query->whereIn('debtor_id', $debtorIds);
-                }
+        $matchStage = [
+            '$match' => [
+                '$or' => [
+                    ['debtor_id' => ['$in' => $debtorIds]],
+                    [
+                        'debtor_id' => null,
+                        'channel_phone_number' => ['$in' => $channelPhoneNumbers]
+                    ]
+                ]
+            ]
+        ];
 
-                // Or filter by remote_phone_number if it doesn't have debtor_id
-                if (!empty($channelPhoneNumbers)) {
-                    $query->orWhere(function ($subQuery) use ($channelPhoneNumbers) {
-                        $subQuery->whereNull('debtor_id')
-                            ->whereIn('channel_phone_number', $channelPhoneNumbers);
-                    });
-                }
-            })
-            ->orderBy('updated_at', 'desc')
-            ->paginate($perPage);
+        // Pagination skip
+        $skip = ($page - 1) * $perPage;
+
+        // Pipeline
+        $pipeline = [
+            $matchStage,
+
+            // Order by updated_at desc
+            ['$sort' => ['updated_at' => -1]],
+
+            // Group by debtor_id (last contact)
+            [
+                '$group' => [
+                    '_id' => '$debtor_id',
+                    'contact' => ['$first' => '$$ROOT']
+                ]
+            ],
+
+            // Remove group metadata
+            ['$replaceRoot' => ['newRoot' => '$contact']],
+
+            // Pagination
+            [
+                '$facet' => [
+                    'metadata' => [
+                        ['$count' => 'total']
+                    ],
+                    'data' => [
+                        ['$sort' => ['updated_at' => -1]],
+                        ['$skip' => $skip],
+                        ['$limit' => $perPage]
+                    ]
+                ]
+            ]
+        ];
+
+        $result = (new Contact())->raw(function ($collection) use ($pipeline) {
+            return $collection->aggregate($pipeline);
+        });
+
+        $result = iterator_to_array($result)[0];
+
+        $total = $result['metadata'][0]['total'] ?? 0;
+        $data = $result['data'];
 
         return response()->json([
             'success' => true,
-            'data' => $contacts->items(),
+            'data' => $data,
             'pagination' => [
-                'current_page' => $contacts->currentPage(),
-                'per_page' => $contacts->perPage(),
-                'total' => $contacts->total(),
-                'last_page' => $contacts->lastPage(),
-                'from' => $contacts->firstItem(),
-                'to' => $contacts->lastItem(),
+                'current_page' => $page,
+                'per_page' => $perPage,
+                'total' => $total,
+                'last_page' => (int) ceil($total / $perPage),
+                'from' => $total > 0 ? $skip + 1 : null,
+                'to' => $skip + count($data),
             ]
         ], 200);
     }

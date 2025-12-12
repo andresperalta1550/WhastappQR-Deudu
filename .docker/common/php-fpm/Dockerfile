@@ -14,16 +14,26 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libcurl4-openssl-dev \
     libicu-dev \
     libzip-dev \
+    libjpeg62-turbo-dev \
+    libpng-dev \
+    libfreetype6-dev \
+    libwebp-dev \
+    && docker-php-ext-configure gd \
+        --with-jpeg \
+        --with-freetype \
+        --with-webp \
     && docker-php-ext-install -j$(nproc) \
-    pdo_mysql \
-    opcache \
-    intl \
-    zip \
-    bcmath \
-    soap \
+        pdo_mysql \
+        opcache \
+        intl \
+        zip \
+        bcmath \
+        soap \
+        gd \
     && pecl install redis mongodb \
     && docker-php-ext-enable redis mongodb \
     && apt-get autoremove -y && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
 
 
 # Set the working directory inside the container

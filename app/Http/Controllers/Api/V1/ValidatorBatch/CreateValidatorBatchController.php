@@ -20,10 +20,17 @@ class CreateValidatorBatchController extends Controller
         try {
             DB::beginTransaction();
 
-            // Generate the consecutive for the batch
+            $file = $request->file('file');
+
+            if (!$file || !$file->isValid()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Archivo inválido o no se pudo cargar correctamente'
+                ], Response::HTTP_BAD_REQUEST);
+            }
+
             $consecutive = (new ValidatorBatchTemp())->generateConsecutive();
 
-            // Create the validator batch
             $batch = (new ValidatorBatch())
                 ->create([
                     'consecutive' => $consecutive,
@@ -35,51 +42,82 @@ class CreateValidatorBatchController extends Controller
                     'phone_number' => $request->getPhoneNumber()
                 ]);
 
-            // Process the excel file
-            $file = $request->file('file');
-            $spreadsheet = IOFactory::load($file->getRealPath());
+            try {
+                $reader = IOFactory::createReaderForFile($file->getRealPath());
+                $reader->setReadDataOnly(true);
+                $spreadsheet = $reader->load($file->getRealPath());
+            } catch (\PhpOffice\PhpSpreadsheet\Reader\Exception $e) {
+                throw new \Exception('Error al leer el archivo Excel: El archivo puede estar corrupto o tener un formato inválido');
+            }
+
             $worksheet = $spreadsheet->getActiveSheet();
             $rows = $worksheet->toArray();
 
-            // Remove the first row (headers)
-            $headers = array_shift($rows);
+            if (empty($rows) || count($rows) < 2) {
+                throw new \Exception('El archivo no contiene datos válidos');
+            }
+
+            // Remove and validate headers
+            $rawHeaders = array_shift($rows);
+
+            // Limpiar headers y mantener el índice original
+            $headers = [];
+            $hasValidHeaders = false;
+
+            foreach ($rawHeaders as $index => $header) {
+                $cleanHeader = trim($header);
+                if (!empty($cleanHeader)) {
+                    $headers[$index] = $cleanHeader;
+                    $hasValidHeaders = true;
+                }
+            }
+
+            if (!$hasValidHeaders) {
+                throw new \Exception('El archivo no contiene encabezados válidos. Asegúrate de que la primera fila tenga nombres de columna.');
+            }
 
             $tempRecords = [];
             $totalRecords = 0;
+            $skippedRows = 0;
 
-            // Prepare the data for insertion in the ValidatorBatchTemp
             foreach ($rows as $index => $row) {
-                // Skip the rows empty
                 if (empty(array_filter($row))) {
+                    $skippedRows++;
                     continue;
                 }
 
-                // Map the data
+                $mappedData = $this->mapExcelRowToData($row, $headers);
+
+                // Validar que el mapeo generó datos válidos
+                if (empty($mappedData)) {
+                    $skippedRows++;
+                    continue;
+                }
+
                 $tempRecords[] = [
                     'batch_id' => $batch->getId(),
-                    'row_number' => $index + 2, // +2 because we initiated with 1 and delete the header
-                    'data' => $this->mapExcelRowToData($row, $headers),
+                    'row_number' => $index + 2,
+                    'data' => $mappedData,
                     'status' => 'pending',
                     'errors' => null
                 ];
 
                 $totalRecords++;
 
-                // Insert the batch of 1000 records for optimize
                 if (count($tempRecords) >= 1000) {
-                    (new ValidatorBatchTemp())
-                        ->insert($tempRecords);
+                    (new ValidatorBatchTemp())->insert($tempRecords);
                     $tempRecords = [];
                 }
             }
 
-            // Insert the last data
             if (!empty($tempRecords)) {
-                (new ValidatorBatchTemp())
-                    ->insert($tempRecords);
+                (new ValidatorBatchTemp())->insert($tempRecords);
             }
 
-            // Update the batch
+            if ($totalRecords === 0) {
+                throw new \Exception('No se encontraron registros válidos para procesar en el archivo');
+            }
+
             $batch->setTotalNumbers($totalRecords);
             $batch->save();
 
@@ -91,10 +129,19 @@ class CreateValidatorBatchController extends Controller
                 'data' => [
                     'batch_id' => $batch->getId(),
                     'consecutive' => $consecutive,
-                    'total_records' => $totalRecords
+                    'total_records' => $totalRecords,
+                    'skipped_rows' => $skippedRows
                 ]
             ], Response::HTTP_OK);
         } catch (\Exception $e) {
+            DB::rollBack();
+
+            \Log::error('Error creating validator batch', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'file' => $file ? $file->getClientOriginalName() : null
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error al crear el lote de validación',
@@ -107,15 +154,23 @@ class CreateValidatorBatchController extends Controller
      * Map the row of Excel to data structure.
      * 
      * @param array $row - The actual row.
-     * @param array $headers - The headers of the Excel file.
+     * @param array $headers - The headers of the Excel file (sparse array with valid headers).
      */
     private function mapExcelRowToData(array $row, array $headers): array
     {
         $data = [];
 
         foreach ($headers as $index => $header) {
+            // Convertir a snake_case y limpiar
             $key = strtolower(trim(str_replace(' ', '_', $header)));
-            $data[$key] = $row[$index] ?? null;
+
+            // Remover caracteres especiales excepto guión bajo
+            $key = preg_replace('/[^a-z0-9_]/', '', $key);
+
+            // Solo agregar si la clave no está vacía
+            if (!empty($key)) {
+                $data[$key] = $row[$index] ?? null;
+            }
         }
 
         return $data;

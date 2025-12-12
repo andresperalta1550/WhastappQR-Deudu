@@ -13,6 +13,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class ProcessValidatorBatchJob implements ShouldQueue
 {
@@ -69,6 +70,7 @@ class ProcessValidatorBatchJob implements ShouldQueue
 
             // Validate if the phone number is valid
             $validationResult = $this->validatePhoneNumber($phoneNumber, $batch);
+            Log::info('Validation result:', $validationResult);
 
             // Update the register with the result
             $record->update([

@@ -117,7 +117,15 @@ class Client
      */
     public function checkNumber(string $phoneNumber): array
     {
-        $url = "{$this->apiUrl}/check-number/{$this->phoneNumber}/{$phoneNumber}";
+        if (str_starts_with($phoneNumber, '+')) {
+            $phoneNumber = substr($phoneNumber, 1);
+        }
+
+        if (str_starts_with($this->phoneNumber, '+')) {
+            $this->phoneNumber = substr($this->phoneNumber, 1);
+        }
+
+        $url = "{$this->apiUrl}/check-number/+{$this->phoneNumber}/+{$phoneNumber}";
 
         $response = Http::withHeaders([
             'Content-Type' => 'application/json',

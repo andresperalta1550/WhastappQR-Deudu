@@ -5,8 +5,6 @@ services:
       dockerfile: ./.docker/staging/nginx/Dockerfile
     volumes:
       - ../files/laravel-storage-staging:/var/www/storage
-    ports:
-      - "80:80"
     networks:
       - dokploy-network
     depends_on:

@@ -5,6 +5,10 @@ services:
       dockerfile: ./.docker/staging/nginx/Dockerfile
     volumes:
       - ../files/laravel-storage-staging:/var/www/storage
+      - ../certs/whatsappqr-test.deudu.co:/etc/ssl/certs/whatsappqr-test.deudu.co
+    ports:
+      - "80:80"
+      - "443:443"
     networks:
       - dokploy-network
     depends_on:

@@ -19,7 +19,7 @@ class GetChannelController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data' => Channel::all()
+            'data' => Channel::with('coordination')->get()
         ]);
     }
 }

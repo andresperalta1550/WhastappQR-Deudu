@@ -72,9 +72,17 @@ class Channel extends Model
     ];
 
     /**
+     * @var string[] $appends The attributes that should be appended to the model's JSON form.
+     */
+    protected $appends = [
+        'coordination_fullname'
+    ];
+
+    /**
      * @var string[] $hidden The attributes that should be hidden for arrays.
      */
     protected $hidden = [
+        'coordination',
         'created_at',
         'updated_at',
         'deleted_at'
@@ -372,5 +380,27 @@ class Channel extends Model
     public function setLastStatusEvent(\App\ValueObjects\LastStatusEvent $event): void
     {
         $this->last_status_event = $event;
+    }
+
+    /**
+     * Get the coordination fullname of the channel.
+     *
+     * @return string
+     */
+    public function getCoordinationFullnameAttribute(): ?string
+    {
+        $fullname = $this->coordination?->name;
+        $fullname .= ' ' . $this->coordination?->lastname;
+        return $fullname;
+    }
+
+    /**
+     * Relationship with coordination
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function coordination(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class, 'coordination_id', 'id');
     }
 }

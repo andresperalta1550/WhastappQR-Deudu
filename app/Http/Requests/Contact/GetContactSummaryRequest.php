@@ -3,6 +3,9 @@
 namespace App\Http\Requests\Contact;
 
 use App\Http\Requests\FilterableRequest;
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use Symfony\Component\HttpFoundation\Response;
 
 class GetContactSummaryRequest extends FilterableRequest
 {
@@ -20,6 +23,9 @@ class GetContactSummaryRequest extends FilterableRequest
         'coordination_id',
         'created_at',
         'updated_at',
+        // Debtor fields (from MySQL)
+        'debtor_fullname',
+        'debtor_identification',
     ];
 
     /**
@@ -82,5 +88,24 @@ class GetContactSummaryRequest extends FilterableRequest
     public function getPage(): int
     {
         return max(1, (int) $this->query('page', 1));
+    }
+
+    /**
+     * Handle a failed validation attempt.
+     *
+     * @param Validator $validator
+     * @return void
+     *
+     * @throws HttpResponseException
+     */
+    protected function failedValidation(Validator $validator): void
+    {
+        throw new HttpResponseException(
+            response()->json([
+                'success' => false,
+                'message' => 'Error de validación',
+                'errors' => $validator->errors()
+            ], Response::HTTP_BAD_REQUEST)
+        );
     }
 }

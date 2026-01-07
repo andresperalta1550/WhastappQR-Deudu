@@ -31,6 +31,9 @@ class GetContactSummaryController extends Controller
         $perPage = $request->getPerPage();
         $page = $request->getPage();
 
+        // Process debtor field filters (from MySQL)
+        $filters = $this->processDebtorFilters($filters);
+
         // Check if coordination_id filter exists
         $coordinationId = $this->extractCoordinationId($filters);
 
@@ -45,6 +48,117 @@ class GetContactSummaryController extends Controller
         // Use aggregation to group by debtor_id (last contact per debtor)
         return $this->getGroupedByDebtor($matchConditions, $perPage, $page);
     }
+
+    /**
+     * Process filters for debtor fields (MySQL) and convert to debtor_id filter.
+     *
+     * @param \App\ValueObjects\FilterCollection $filters
+     * @return \App\ValueObjects\FilterCollection
+     */
+    protected function processDebtorFilters($filters): \App\ValueObjects\FilterCollection
+    {
+        $debtorFilters = [];
+        $otherFilters = new \App\ValueObjects\FilterCollection();
+        $debtorFieldMap = [
+            'debtor_fullname' => 'fullname',
+            'debtor_identification' => 'identification',
+        ];
+
+        // Separate debtor filters from other filters
+        foreach ($filters->all() as $filter) {
+            if (isset($debtorFieldMap[$filter->getField()])) {
+                $debtorFilters[] = $filter;
+            } else {
+                $otherFilters->add($filter);
+            }
+        }
+
+        // If there are no debtor filters, return original filters
+        if (empty($debtorFilters)) {
+            return $filters;
+        }
+
+        // Query MySQL Debtors table with debtor filters
+        $debtorQuery = \App\Models\Debtor::query();
+
+        foreach ($debtorFilters as $filter) {
+            $field = $filter->getField();
+            $operator = $filter->getOperator();
+            $value = $filter->getValue();
+
+            // Apply filter based on field and operator
+            if ($field === 'debtor_fullname') {
+                // For fullname, we need to search in concatenated name + lastname
+                $this->applyFullnameFilter($debtorQuery, $operator, $value);
+            } elseif ($field === 'debtor_identification') {
+                $this->applyMySQLFilter($debtorQuery, 'identification', $operator, $value);
+            }
+        }
+
+        // Get debtor IDs that match the filters
+        $debtorIds = $debtorQuery->pluck('id')->toArray();
+
+        // If no debtors match, return empty result by adding impossible filter
+        if (empty($debtorIds)) {
+            $otherFilters->add(new \App\ValueObjects\Filter('debtor_id', 'IN', []));
+        } else {
+            // Add debtor_id IN filter with found IDs
+            $otherFilters->add(new \App\ValueObjects\Filter('debtor_id', 'IN', $debtorIds));
+        }
+
+        return $otherFilters;
+    }
+
+    /**
+     * Apply fullname filter to debtor query.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param string $operator
+     * @param mixed $value
+     * @return void
+     */
+    protected function applyFullnameFilter($query, string $operator, $value): void
+    {
+        if ($operator === 'LIKE') {
+            $query->where(function ($q) use ($value) {
+                $q->whereRaw("CONCAT(name, ' ', lastname) LIKE ?", ["%{$value}%"]);
+            });
+        } elseif ($operator === 'EQUAL') {
+            $query->where(function ($q) use ($value) {
+                $q->whereRaw("CONCAT(name, ' ', lastname) = ?", [$value]);
+            });
+        }
+        // Add more operators as needed
+    }
+
+    /**
+     * Apply filter to MySQL query based on operator.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param string $field
+     * @param string $operator
+     * @param mixed $value
+     * @return void
+     */
+    protected function applyMySQLFilter($query, string $field, string $operator, $value): void
+    {
+        match ($operator) {
+            'EQUAL' => $query->where($field, '=', $value),
+            'NOT_EQUAL' => $query->where($field, '!=', $value),
+            'LIKE' => $query->where($field, 'LIKE', "%{$value}%"),
+            'NOT_LIKE' => $query->where($field, 'NOT LIKE', "%{$value}%"),
+            'IN' => $query->whereIn($field, $value),
+            'NOT_IN' => $query->whereNotIn($field, $value),
+            'GREATER_THAN' => $query->where($field, '>', $value),
+            'GREATER_THAN_OR_EQUAL' => $query->where($field, '>=', $value),
+            'LESS_THAN' => $query->where($field, '<', $value),
+            'LESS_THAN_OR_EQUAL' => $query->where($field, '<=', $value),
+            'IS_NULL' => $query->whereNull($field),
+            'IS_NOT_NULL' => $query->whereNotNull($field),
+            default => null
+        };
+    }
+
 
     /**
      * Extract coordination_id value from filters if present.
@@ -172,6 +286,9 @@ class GetContactSummaryController extends Controller
         $total = $result['metadata'][0]['total'] ?? 0;
         $data = $result['data'];
 
+        // Enrich data with debtor information
+        $data = $this->enrichWithDebtorInfo($data);
+
         return response()->json([
             'success' => true,
             'data' => $data,
@@ -184,5 +301,42 @@ class GetContactSummaryController extends Controller
                 'to' => $skip + count($data),
             ]
         ], 200);
+    }
+
+    /**
+     * Enrich contact data with debtor information.
+     *
+     * @param array $contacts
+     * @return array
+     */
+    protected function enrichWithDebtorInfo(array $contacts): array
+    {
+        // Collect all debtor IDs
+        $debtorIds = array_filter(array_map(function ($contact) {
+            return $contact['debtor_id'] ?? null;
+        }, $contacts));
+
+        if (empty($debtorIds)) {
+            return $contacts;
+        }
+
+        // Fetch debtors from MySQL
+        $debtors = \App\Models\Debtor::whereIn('id', $debtorIds)->get()->keyBy('id');
+
+        // Enrich contacts with debtor info
+        foreach ($contacts as &$contact) {
+            $debtorId = $contact['debtor_id'] ?? null;
+
+            if ($debtorId && isset($debtors[$debtorId])) {
+                $debtor = $debtors[$debtorId];
+                $contact['debtor_fullname'] = $debtor->getFullname();
+                $contact['debtor_identification'] = $debtor->identification ?? null;
+            } else {
+                $contact['debtor_fullname'] = null;
+                $contact['debtor_identification'] = null;
+            }
+        }
+
+        return $contacts;
     }
 }

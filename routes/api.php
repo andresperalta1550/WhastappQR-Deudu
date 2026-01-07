@@ -70,16 +70,6 @@ Route::prefix('v1')->group(function () {
         Route::get('/summary', [\App\Http\Controllers\Api\V1\Contact\GetContactSummaryController::class, '__invoke']);
 
         /**
-         * Summary contacts by debtor IDs (deprecated - use /summary instead)
-         */
-        Route::get('/summary/by-debtors', [\App\Http\Controllers\Api\V1\Contact\GetSummaryByDebtorsController::class, '__invoke']);
-
-        /**
-         * Summary contacts by coordination ID (deprecated - use /summary instead)
-         */
-        Route::get('/summary/by-coordination', [\App\Http\Controllers\Api\V1\Contact\GetSummaryConversationsController::class, '__invoke']);
-
-        /**
          * Mark contact as resolved
          */
         Route::post('/{contact}/mark-as-resolved', [\App\Http\Controllers\Api\V1\Contact\MarkAsResolvedController::class, '__invoke']);
@@ -101,6 +91,11 @@ Route::prefix('v1')->group(function () {
              * Approve a batch validator numbers
              */
             Route::put('/{batch}/approve', [\App\Http\Controllers\Api\V1\ValidatorBatch\ApproveValidatorBatchController::class, '__invoke']);
+
+            /**
+             * Reject a batch validator numbers
+             */
+            Route::put('/{batch}/reject', [\App\Http\Controllers\Api\V1\ValidatorBatch\RejectValidatorBatchController::class, '__invoke']);
         });
     });
 });

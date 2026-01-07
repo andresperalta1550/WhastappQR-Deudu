@@ -64,12 +64,18 @@ Route::prefix('v1')->group(function () {
 
     Route::prefix('conversations')->group(function () {
         /**
-         * Summary contacts by debtor IDs
+         * Unified contact summary endpoint (replaces by-debtors and by-coordination)
+         * Supports flexible filtering and optional grouping by debtor
+         */
+        Route::get('/summary', [\App\Http\Controllers\Api\V1\Contact\GetContactSummaryController::class, '__invoke']);
+
+        /**
+         * Summary contacts by debtor IDs (deprecated - use /summary instead)
          */
         Route::get('/summary/by-debtors', [\App\Http\Controllers\Api\V1\Contact\GetSummaryByDebtorsController::class, '__invoke']);
 
         /**
-         * Summary contacts by coordination ID
+         * Summary contacts by coordination ID (deprecated - use /summary instead)
          */
         Route::get('/summary/by-coordination', [\App\Http\Controllers\Api\V1\Contact\GetSummaryConversationsController::class, '__invoke']);
 
@@ -78,6 +84,7 @@ Route::prefix('v1')->group(function () {
          */
         Route::post('/{contact}/mark-as-resolved', [\App\Http\Controllers\Api\V1\Contact\MarkAsResolvedController::class, '__invoke']);
     });
+
 
     Route::prefix('batches')->group(function () {
         Route::prefix('validator-numbers')->group(function () {

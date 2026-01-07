@@ -112,11 +112,4 @@ class ValidatorBatchTemp extends Model
     {
         return $this->errors;
     }
-
-    public function generateConsecutive(): int
-    {
-        $lastBatch = $this->orderBy('consecutive', 'desc')->first();
-
-        return $lastBatch ? $lastBatch->consecutive + 1 : 1;
-    }
 }

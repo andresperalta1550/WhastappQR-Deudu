@@ -29,7 +29,7 @@ class CreateValidatorBatchController extends Controller
                 ], Response::HTTP_BAD_REQUEST);
             }
 
-            $consecutive = (new ValidatorBatchTemp())->generateConsecutive();
+            $consecutive = (new ValidatorBatch())->generateConsecutive();
 
             $batch = (new ValidatorBatch())
                 ->create([

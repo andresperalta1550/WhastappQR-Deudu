@@ -259,4 +259,16 @@ class ValidatorBatch extends Model
             ],
         ];
     }
+
+    /**
+     * Generate a consecutive number for the batch.
+     *
+     * @return int
+     */
+    public function generateConsecutive(): int
+    {
+        $lastBatch = $this->orderBy('consecutive', 'desc')->first();
+
+        return $lastBatch ? $lastBatch->consecutive + 1 : 1;
+    }
 }

@@ -23,7 +23,8 @@ class DownloadMediaJob implements ShouldQueue
     public function __construct(
         public string $messageId,
         public string $remoteUrl
-    ) {}
+    ) {
+    }
 
     /**
      * Execute the job.
@@ -46,14 +47,7 @@ class DownloadMediaJob implements ShouldQueue
             return;
         }
 
-        // S3 is configured with base64 file, so we need to decode it
-        $binaryData = base64_decode($response->body());
-
-        // If we cannot decode, use the original body
-        if ($binaryData === false) {
-            Log::error('No se pudo decodificar el contenido base64 para el mensaje ID: ' . $this->messageId);
-            $binaryData = $response->body();
-        }
+        $binaryData = $response->body();
 
         // Create a unique filename
         $filename = "media/{$this->messageId}_" . basename($this->remoteUrl);

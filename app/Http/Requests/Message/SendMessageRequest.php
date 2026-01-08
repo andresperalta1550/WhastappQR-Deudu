@@ -31,7 +31,7 @@ class SendMessageRequest extends FormRequest
             'message.info.to' => 'required|string',
             'message.info.type' => 'required|string|in:text,file',
             'message.info.coordination_id' => 'required|int',
-            'message.info.debtor_id' => 'required|int',
+            'message.info.debtor_id' => 'sometimes|int',
             'message.data' => 'required|array'
         ];
 

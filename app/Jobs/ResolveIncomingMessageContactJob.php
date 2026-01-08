@@ -209,7 +209,7 @@ class ResolveIncomingMessageContactJob implements ShouldQueue
                 $contact->setUnreadMessages(1);
                 $contact->setLastMessagesEvents(new LastMessageEvent(
                     lastInboundAt: $this->event->timestamp
-                    ? \Carbon\Carbon::parse($this->event->timestamp)
+                    ? \Carbon\Carbon::parse($this->event->timestamp, 'UTC')
                     : null,
                     lastOutboundAt: null,
                     lastCheckNumberAt: now()
@@ -221,7 +221,7 @@ class ResolveIncomingMessageContactJob implements ShouldQueue
                 $contact->setLastMessagesEvents(new LastMessageEvent(
                     lastInboundAt: null,
                     lastOutboundAt: $this->event->timestamp
-                    ? \Carbon\Carbon::parse($this->event->timestamp)
+                    ? \Carbon\Carbon::parse($this->event->timestamp, 'UTC')
                     : null,
                     lastCheckNumberAt: now()
                 ));

@@ -39,11 +39,11 @@ class EditEvent extends WebhookEvent
 
         // Set the edited object
         $edited->setIsEdited(true);
-        $edited->setEditedAt(Carbon::parse($this->timestamp));
+        $edited->setEditedAt(Carbon::parse($this->timestamp, 'UTC'));
         $prev = $edited->getPreviousVersions();
         $prev[] = new PreviousVersion(
             $message->getText(),
-            Carbon::parse($this->timestamp)
+            Carbon::parse($this->timestamp, 'UTC')
         );
         $edited->setPreviousVersions($prev);
         // Set the new text

@@ -49,7 +49,7 @@ class StatusChannelEvent extends WebhookEvent
             new LastStatusEvent(
                 $this->eventType,
                 $this->qrCode,
-                Carbon::parse($this->timestamp)
+                Carbon::parse($this->timestamp, 'UTC')
             )
         );
 

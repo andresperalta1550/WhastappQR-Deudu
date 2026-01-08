@@ -44,7 +44,7 @@ class StatusMessageEvent extends WebhookEvent
     {
         $message->setStatus($event);
         $message->setDelivery(new Delivery(
-            sentAt: isset($this->timestamp) ? \Carbon\Carbon::parse($this->timestamp) : null,
+            sentAt: isset($this->timestamp) ? \Carbon\Carbon::parse($this->timestamp, 'UTC') : null,
             deliveredAt: $message->getDelivery()?->deliveredAt,
             readAt: $message->getDelivery()?->readAt
         ));
@@ -55,7 +55,7 @@ class StatusMessageEvent extends WebhookEvent
         $message->setStatus('delivered');
         $message->setDelivery(new Delivery(
             sentAt: $message->getDelivery()?->sentAt,
-            deliveredAt: isset($this->timestamp) ? \Carbon\Carbon::parse($this->timestamp) : null,
+            deliveredAt: isset($this->timestamp) ? \Carbon\Carbon::parse($this->timestamp, 'UTC') : null,
             readAt: $message->getDelivery()?->readAt
         ));
     }
@@ -66,7 +66,7 @@ class StatusMessageEvent extends WebhookEvent
         $message->setDelivery(new Delivery(
             sentAt: $message->getDelivery()?->sentAt,
             deliveredAt: $message->getDelivery()?->deliveredAt,
-            readAt: isset($this->timestamp) ? \Carbon\Carbon::parse($this->timestamp) : null
+            readAt: isset($this->timestamp) ? \Carbon\Carbon::parse($this->timestamp, 'UTC') : null
         ));
     }
 }

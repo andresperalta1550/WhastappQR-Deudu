@@ -61,9 +61,9 @@ abstract class MessageHandler
 
         $model->setDelivery(new Delivery(
             sentAt: isset($this->event->timestamp)
-                ? \Carbon\Carbon::parse($this->event->timestamp) : null,
+            ? \Carbon\Carbon::parse($this->event->timestamp, 'UTC') : null,
             deliveredAt: isset($this->event->timestamp)
-                ? \Carbon\Carbon::parse($this->event->timestamp) : null,
+            ? \Carbon\Carbon::parse($this->event->timestamp, 'UTC') : null,
             readAt: null,
         ));
 

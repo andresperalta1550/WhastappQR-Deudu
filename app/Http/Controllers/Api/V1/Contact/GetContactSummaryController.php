@@ -287,7 +287,7 @@ class GetContactSummaryController extends Controller
         $data = $result['data'];
 
         // Enrich data with debtor information
-        $data = $this->enrichWithDebtorInfo($data);
+        $data = $this->enrichWithDebtorAndCoordinationInfo($data);
 
         return response()->json([
             'success' => true,
@@ -304,36 +304,80 @@ class GetContactSummaryController extends Controller
     }
 
     /**
-     * Enrich contact data with debtor information.
+     * Enrich contact data with debtor information, coordination_id, and coordination_fullname.
      *
      * @param array $contacts
      * @return array
      */
-    protected function enrichWithDebtorInfo(array $contacts): array
+    protected function enrichWithDebtorAndCoordinationInfo(array $contacts): array
     {
-        // Collect all debtor IDs
-        $debtorIds = array_filter(array_map(function ($contact) {
-            return $contact['debtor_id'] ?? null;
-        }, $contacts));
-
-        if (empty($debtorIds)) {
+        if (empty($contacts)) {
             return $contacts;
         }
 
-        // Fetch debtors from MySQL
-        $debtors = \App\Models\Debtor::whereIn('id', $debtorIds)->get()->keyBy('id');
+        // Collect all unique IDs and phone numbers in one pass
+        $debtorIds = [];
+        $channelPhoneNumbers = [];
 
-        // Enrich contacts with debtor info
+        foreach ($contacts as $contact) {
+            if (isset($contact['debtor_id']) && $contact['debtor_id'] !== null) {
+                $debtorIds[$contact['debtor_id']] = true;
+            }
+            if (isset($contact['channel_phone_number']) && $contact['channel_phone_number'] !== null) {
+                $channelPhoneNumbers[$contact['channel_phone_number']] = true;
+            }
+        }
+
+        // Fetch all necessary data in parallel
+        $debtors = !empty($debtorIds)
+            ? \App\Models\Debtor::whereIn('id', array_keys($debtorIds))->get()->keyBy('id')
+            : collect();
+
+        $channels = !empty($channelPhoneNumbers)
+            ? \App\Models\Channel::whereIn('phone_number', array_keys($channelPhoneNumbers))->get()->keyBy('phone_number')
+            : collect();
+
+        // Extract coordination_ids from channels
+        $coordinationIds = $channels
+            ->pluck('coordination_id')
+            ->filter()
+            ->unique()
+            ->toArray();
+
+        // Fetch coordinators
+        $coordinators = !empty($coordinationIds)
+            ? \App\Models\User::whereIn('id', $coordinationIds)->get()->keyBy('id')
+            : collect();
+
+        // Single pass enrichment
         foreach ($contacts as &$contact) {
+            // Enrich debtor information
             $debtorId = $contact['debtor_id'] ?? null;
-
-            if ($debtorId && isset($debtors[$debtorId])) {
+            if ($debtorId && $debtors->has($debtorId)) {
                 $debtor = $debtors[$debtorId];
                 $contact['debtor_fullname'] = $debtor->getFullname();
                 $contact['debtor_identification'] = $debtor->identification ?? null;
             } else {
                 $contact['debtor_fullname'] = null;
                 $contact['debtor_identification'] = null;
+            }
+
+            // Enrich coordination information
+            $channelPhoneNumber = $contact['channel_phone_number'] ?? null;
+            if ($channelPhoneNumber && $channels->has($channelPhoneNumber)) {
+                $channel = $channels[$channelPhoneNumber];
+                $coordinationId = $channel->getCoordinationId();
+                $contact['coordination_id'] = $coordinationId;
+
+                // Add coordination_fullname
+                if ($coordinationId && $coordinators->has($coordinationId)) {
+                    $contact['coordination_fullname'] = $coordinators[$coordinationId]->getFullname();
+                } else {
+                    $contact['coordination_fullname'] = null;
+                }
+            } else {
+                $contact['coordination_id'] = null;
+                $contact['coordination_fullname'] = null;
             }
         }
 

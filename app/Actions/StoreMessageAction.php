@@ -52,7 +52,7 @@ class StoreMessageAction
         $message->setText($textMessageToSend->text());
         $message->setStatus('sent');
         $message->setSource('aquila');
-        $message->setDebtorId($data['message']['info']['debtor_id']);
+        $message->setDebtorId($data['message']['info']['debtor_id'] ?? null);
         $message->setDelivery(new Delivery(
             sentAt: Carbon::now(),
             deliveredAt: null,

@@ -41,18 +41,16 @@ class MessageUpdated implements ShouldBroadcast
      */
     public function broadcastWith(): array
     {
-        return [
-            'message' => [
-                'id' => $this->message->getId(),
-                'message_uuid' => $this->message->getMessageUuid(),
-                'channel_uuid' => $this->message->getChannelUuid(),
-                'remote_phone_number' => $this->message->getRemotePhoneNumber(),
-                'debtor_id' => $this->message->getDebtorId(),
-                'direction' => $this->message->getDirection(),
-                'type' => $this->message->getType(),
-                'text' => $this->message->getText(),
-                'status' => $this->message->getStatus(),
-            ],
-        ];
+        return $this->message->toArray();
+    }
+
+    /**
+     * Name of the event.
+     *
+     * @return string
+     */
+    public function broadcastAs(): string
+    {
+        return 'message.updated';
     }
 }

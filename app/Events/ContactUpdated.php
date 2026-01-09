@@ -41,14 +41,16 @@ class ContactUpdated implements ShouldBroadcast
      */
     public function broadcastWith(): array
     {
-        return [
-            'contact' => [
-                'id' => $this->contact->getId(),
-                'remote_phone_number' => $this->contact->getRemotePhoneNumber(),
-                'debtor_id' => $this->contact->getDebtorId(),
-                'on_whatsapp' => $this->contact->getOnWhatsapp(),
-                'unread_messages' => $this->contact->getUnreadMessages(),
-            ],
-        ];
+        return $this->contact->toArray();
+    }
+
+    /**
+     * Name of the event.
+     *
+     * @return string
+     */
+    public function broadcastAs(): string
+    {
+        return 'contact.updated';
     }
 }

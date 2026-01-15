@@ -18,7 +18,7 @@ class GetChannelAvailableForDebtorController extends Controller
 
         if (!$channel) {
             throw new BadRequestException(
-                "No se encontro un canal disponible para la coordinacion $coordinationId"
+                "No existe un canal de comunicación asignado para la coordinación de este deudor. Por favor, configure un canal válido para continuar con el proceso."
             );
         }
 

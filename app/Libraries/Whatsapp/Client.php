@@ -4,10 +4,8 @@ namespace App\Libraries\Whatsapp;
 
 use App\Exceptions\BadRequestException;
 use App\Libraries\Whatsapp\Messages\WhatsappMessage;
-use App\Models\Channel;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 
 /**
  * This class provides methods to interact with 2Chat API.
@@ -52,7 +50,7 @@ class Client
 
         if (!$channel) {
             throw new BadRequestException(
-                "No se encontro un canal disponible para la coordinacion $coordinationId"
+                "No existe un canal de comunicación asignado para la coordinación de este deudor. Por favor, configure un canal válido para continuar con el proceso."
             );
         }
 

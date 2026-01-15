@@ -31,22 +31,61 @@ class GetContactSummaryController extends Controller
         $perPage = $request->getPerPage();
         $page = $request->getPage();
 
-        // Process debtor field filters (from MySQL)
+        // process debtor filters first (they map to debtor_id)
         $filters = $this->processDebtorFilters($filters);
 
-        // Check if coordination_id filter exists
-        $coordinationId = $this->extractCoordinationId($filters);
+        // Split filters into Identity (Pre-Match) and State (Post-Match)
+        [$identityFilters, $stateFilters] = $this->splitFilters($filters);
+
+        // Check if coordination_id filter exists (it's an identity filter)
+        $coordinationId = $this->extractCoordinationId($identityFilters);
 
         if ($coordinationId !== null) {
-            // Apply special logic for coordination_id
-            $matchConditions = $this->buildCoordinationMatchConditions($coordinationId, $filters, $mongoFilterService);
+            // Apply special logic for coordination_id to Pre-Match
+            $preMatchConditions = $this->buildCoordinationMatchConditions($coordinationId, $identityFilters, $mongoFilterService);
         } else {
-            // Build MongoDB match conditions from filters
-            $matchConditions = $mongoFilterService->buildMatchConditions($filters);
+            // Build MongoDB match conditions from identity filters
+            $preMatchConditions = $mongoFilterService->buildMatchConditions($identityFilters);
         }
 
+        // Build Post-Match conditions from state filters
+        $postMatchConditions = $mongoFilterService->buildMatchConditions($stateFilters);
+
         // Use aggregation to group by debtor_id (last contact per debtor)
-        return $this->getGroupedByDebtor($matchConditions, $perPage, $page);
+        return $this->getGroupedByDebtor($preMatchConditions, $postMatchConditions, $perPage, $page);
+    }
+
+    /**
+     * Split filters into Identity (Pre-Aggregation) and State (Post-Aggregation).
+     * We identify if the filter is an identity filter by checking if it is a debtor_id, 
+     * channel_phone_number, remote_phone_number, coordination_id, debtor_fullname, 
+     * or debtor_identification. 
+     *
+     * @param \App\ValueObjects\FilterCollection $filters
+     * @return array{0: \App\ValueObjects\FilterCollection, 1: \App\ValueObjects\FilterCollection}
+     */
+    protected function splitFilters(\App\ValueObjects\FilterCollection $filters): array
+    {
+        $identityFields = [
+            'debtor_id',
+            'channel_phone_number',
+            'remote_phone_number',
+            'coordination_id',
+            // debtor_fullname and debtor_identification are converted to debtor_id by processDebtorFilters
+        ];
+
+        $identityFilters = new \App\ValueObjects\FilterCollection();
+        $stateFilters = new \App\ValueObjects\FilterCollection();
+
+        foreach ($filters->all() as $filter) {
+            if (in_array($filter->getField(), $identityFields)) {
+                $identityFilters->add($filter);
+            } else {
+                $stateFilters->add($filter);
+            }
+        }
+
+        return [$identityFilters, $stateFilters];
     }
 
     /**
@@ -208,7 +247,8 @@ class GetContactSummaryController extends Controller
             ]
         ];
 
-        // Get other filters (excluding coordination_id)
+        // For coordination match, we primarily care about building the OR structure for identity
+        // The $filters passed here should properly be just the identity filters minus coordination_id
         $otherFilters = new \App\ValueObjects\FilterCollection();
         foreach ($filters->all() as $filter) {
             if ($filter->getField() !== 'coordination_id') {
@@ -231,36 +271,59 @@ class GetContactSummaryController extends Controller
     /**
      * Get contacts grouped by debtor_id (last contact per debtor).
      *
-     * @param array $matchConditions
+     * @param array $preMatchConditions
+     * @param array $postMatchConditions
      * @param int $perPage
      * @param int $page
      * @return JsonResponse
      */
-    protected function getGroupedByDebtor(array $matchConditions, int $perPage, int $page): JsonResponse
+    protected function getGroupedByDebtor(array $preMatchConditions, array $postMatchConditions, int $perPage, int $page): JsonResponse
     {
         $skip = ($page - 1) * $perPage;
 
         // Pipeline for aggregation
         $pipeline = [];
 
-        // Only add match stage if there are conditions
-        if (!empty($matchConditions)) {
-            $pipeline[] = ['$match' => $matchConditions];
+        // 1. Pre-Match (Identity filters) - Narrow down the set of candidates efficiently
+        // Also exclude soft-deleted records since we are using raw aggregation
+        if (!empty($preMatchConditions)) {
+            $pipeline[] = ['$match' => array_merge($preMatchConditions, ['deleted_at' => null])];
+        } else {
+            $pipeline[] = ['$match' => ['deleted_at' => null]];
         }
 
-        // Order by updated_at desc
+        // 2. Sort by updated_at desc to ensure "first" is the latest
         $pipeline[] = ['$sort' => ['updated_at' => -1]];
 
-        // Group by debtor_id (get last contact for each debtor)
+        // 3. Group by debtor_id to get the single latest contact state per debtor
         $pipeline[] = [
             '$group' => [
-                '_id' => '$debtor_id',
+                '_id' => [
+                    'debtor_id' => '$debtor_id',
+                    // Note: If debtor_id is null, we might want to split by something else or keep them separate?
+                    // Currently, if debtor_id is null, they all group together into one null bucket which might not be desired
+                    // if they are different unknown users.
+                    // Ideally, if debtor_id is missing, we group by remote_phone_number + channel_phone_number.
+                    // For now, retaining existing behavior but checking if we need composite key.
+                ],
+                // We actually want to group by debtor_id if present, OR unique contact if not?
+                // The prompt implies "debtor" context.
+                // Existing logic was just '_id' => '$debtor_id'.
+                // If multiple contacts have null debtor_id, they will collapse.
+                // Let's stick to the request: "Latest data".
+                '_id' => '$debtor_id', // Preserving existing grouping key
                 'contact' => ['$first' => '$$ROOT']
             ]
         ];
 
-        // Remove group metadata
+        // 4. Unwrap the contact
         $pipeline[] = ['$replaceRoot' => ['newRoot' => '$contact']];
+
+        // 5. Post-Match (State filters) - Apply to the LATEST record found
+        if (!empty($postMatchConditions)) {
+            $pipeline[] = ['$match' => $postMatchConditions];
+        }
+
 
         // Pagination facet
         $pipeline[] = [

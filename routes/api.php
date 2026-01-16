@@ -65,9 +65,11 @@ Route::prefix('v1')->group(function () {
     Route::prefix('conversations')->group(function () {
         /**
          * Unified contact summary endpoint (replaces by-debtors and by-coordination)
-         * Supports flexible filtering and optional grouping by debtor
+         * Supports flexible filtering and optional grouping by debtor.
+         * You can use this endpoint with method GET or POST.
          */
         Route::get('/summary', [\App\Http\Controllers\Api\V1\Contact\GetContactSummaryController::class, '__invoke']);
+        Route::post('/summary', [\App\Http\Controllers\Api\V1\Contact\GetContactSummaryController::class, '__invoke']);
 
         /**
          * Mark contact as resolved

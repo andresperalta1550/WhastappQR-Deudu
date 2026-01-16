@@ -123,7 +123,10 @@ RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 RUN docker-php-ext-enable redis mongodb
 
 # Enable PHP-FPM status page by modifying zz-docker.conf with sed
-RUN sed -i '/\[www\]/a pm.status_path = /status' /usr/local/etc/php-fpm.d/zz-docker.conf
+RUN echo '[www]' > /usr/local/etc/php-fpm.d/zz-healthcheck.conf && \
+    echo 'pm.status_path = /status' >> /usr/local/etc/php-fpm.d/zz-healthcheck.conf && \
+    echo 'ping.path = /ping' >> /usr/local/etc/php-fpm.d/zz-healthcheck.conf && \
+    echo 'ping.response = pong' >> /usr/local/etc/php-fpm.d/zz-healthcheck.conf
 # Update the variables_order to include E (for ENV)
 #RUN sed -i 's/variables_order = "GPCS"/variables_order = "EGPCS"/' "$PHP_INI_DIR/php.ini"
 

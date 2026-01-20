@@ -58,6 +58,7 @@ class StoreMessageAction
             deliveredAt: null,
             readAt: null
         ));
+        $message->setSentUserBy($data['message']['info']['sent_user_by']);
         $message->save();
 
         return $message;

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\PaginationRequest;
 use Illuminate\Support\Facades\Log;
 use App\Models\Message;
+use App\Models\User;
 
 class GetMessagesByRemothePhoneNumberController extends Controller
 {
@@ -28,17 +29,26 @@ class GetMessagesByRemothePhoneNumberController extends Controller
 
         $messages = collect($paginator->items());
 
+        $users_ids = $messages->pluck('sent_user_by')->unique()->toArray();
+
+        $users = User::whereIn('id', $users_ids)->get();
+
+        $messagesResponse = [];
+
         foreach ($messages as $message) {
             $message->setInternalRead(true);
             $message->setInternalReadAt(\Carbon\Carbon::now());
             $message->save();
+            $messageResponse = $message->toArray();
+            $messageResponse['sent_user_by_fullname'] = $users->where('id', $message->getSentUserBy())->first()->getFullName();
+            $messagesResponse[] = $messageResponse;
         }
 
         $this->updateUnreadMessagesCount($remotePhoneNumber);
 
         return response()->json([
             'success' => true,
-            'data' => $messages,
+            'data' => $messagesResponse,
             'pagination' => [
                 'current_page' => $paginator->currentPage(),
                 'last_page' => $paginator->lastPage(),

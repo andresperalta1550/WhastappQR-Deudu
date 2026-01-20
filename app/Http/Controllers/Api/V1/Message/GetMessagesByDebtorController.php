@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1\Message;
 
 use App\Http\Controllers\Controller;
 use App\Models\Message;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -25,6 +26,10 @@ class GetMessagesByDebtorController extends Controller
 
         $messages = collect($paginator->items());
 
+        $users_ids = $messages->pluck('sent_user_by')->unique()->toArray();
+
+        $users = User::whereIn('id', $users_ids)->get();
+
         // We group based on changes in remote_phone_number or channel_phone_number
         $groups = [];
         $currentGroup = [];
@@ -45,7 +50,10 @@ class GetMessagesByDebtorController extends Controller
             $message->setInternalRead(true);
             $message->setInternalReadAt(\Carbon\Carbon::now());
 
-            $currentGroup[] = $message;
+            $messageResponse = $message->toArray();
+            $messageResponse['sent_user_by_fullname'] = $users->where('id', $message->getSentUserBy())->first()->getFullName();
+
+            $currentGroup[] = $messageResponse;
             $message->save();
             $lastRemotePhoneNumber = $message->getRemotePhoneNumber();
             $lastChannelPhoneNumber = $message->getChannelPhoneNumber();

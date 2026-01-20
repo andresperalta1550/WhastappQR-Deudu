@@ -77,7 +77,7 @@ class Message extends Model
         'direction' => 'string',
         'sent_by' => 'string',
         'source' => 'string',
-        'sent_user_by' => 'string',
+        'sent_user_by' => 'integer',
         'type' => 'string',
         'text' => 'string',
         'status' => 'string',
@@ -318,9 +318,9 @@ class Message extends Model
     /**
      * Get the sent user by.
      *
-     * @return string|null
+     * @return int|null
      */
-    public function getSentUserBy(): ?string
+    public function getSentUserBy(): ?int
     {
         return $this->sent_user_by;
     }
@@ -328,10 +328,10 @@ class Message extends Model
     /**
      * Set the sent user by.
      *
-     * @param string|null $value
+     * @param int|null $value
      * @return void
      */
-    public function setSentUserBy(?string $value): void
+    public function setSentUserBy(?int $value): void
     {
         $this->sent_user_by = $value;
     }

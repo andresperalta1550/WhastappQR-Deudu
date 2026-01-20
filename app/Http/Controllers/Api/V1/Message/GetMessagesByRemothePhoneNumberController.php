@@ -40,7 +40,11 @@ class GetMessagesByRemothePhoneNumberController extends Controller
             $message->setInternalReadAt(\Carbon\Carbon::now());
             $message->save();
             $messageResponse = $message->toArray();
-            $messageResponse['sent_user_by_fullname'] = $users->where('id', $message->getSentUserBy())->first()->getFullName();
+            $user = $users->where('id', $message->getSentUserBy())->first();
+            $messageResponse['sent_user_by_fullname'] = null;
+            if ($user) {
+                $messageResponse['sent_user_by_fullname'] = $user->getFullName();
+            }
             $messagesResponse[] = $messageResponse;
         }
 

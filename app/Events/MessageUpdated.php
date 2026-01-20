@@ -3,6 +3,7 @@
 namespace App\Events;
 
 use App\Models\Message;
+use App\Models\User;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -41,7 +42,13 @@ class MessageUpdated implements ShouldBroadcast
      */
     public function broadcastWith(): array
     {
-        return $this->message->toArray();
+        $user = User::find($this->message->getSentUserBy());
+        if (!$user) {
+            return $this->message->toArray();
+        }
+        $message = $this->message->toArray();
+        $message['sent_user_by_fullname'] = $user->getFullname();
+        return $message;
     }
 
     /**

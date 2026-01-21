@@ -109,7 +109,16 @@ class ProcessValidatorBatchJob implements ShouldQueue
         foreach ($records as $record) {
             $isValidated = $record->getStatus() === ValidatorBatchTemp::STATUS_COMPLETED ? 'SI' : 'NO';
             $validationResult = $record->getValidationResult() ?? [];
-            if (!$validationResult['is_valid']) {
+            if (array_key_exists('error', $validationResult) && $validationResult['error']) {
+                $data[] = [
+                    $record->getData()['celular'] ?? $record->getData()['telefono'] ?? null,
+                    $isValidated,
+                    'NO',
+                    $validationResult['error_message']
+                ];
+                continue;
+            }
+            if (array_key_exists('is_valid', $validationResult) && !$validationResult['is_valid']) {
                 $data[] = [
                     $record->getData()['celular'] ?? $record->getData()['telefono'] ?? null,
                     $isValidated,

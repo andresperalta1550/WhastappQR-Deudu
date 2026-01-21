@@ -2,40 +2,37 @@ services:
   web:
     build:
       context: .
-      dockerfile: ./.docker/staging/nginx/Dockerfile
+      dockerfile: ./.docker/production/nginx/Dockerfile
+    volumes:
+      - ../files/laravel-storage-prod:/var/www/storage
+      - ../certs/whatsappqr.deudu.co:/etc/ssl/certs/whatsappqr.deudu.co
     ports:
-      # Map port 80 inside the container to the port specified by 'NGINX_PORT' on the host machine
-      - "8080:80"
-    environment:
-      - NGINX_HOST=localhost
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
     networks:
       - dokploy-network
     depends_on:
       php-fpm:
-        condition: service_started # Wait for php-fpm to start
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.prod-whatsapp-qr.rule=Host(`whatsappqr.deudu.co`)"
-      - "traefik.http.routers.prod-whatsapp-qr.entrypoints=websecure"
-      - "traefik.http.routers.prod-whatsapp-qr.tls.certResolver=letsencrypt"
-      - "traefik.http.services.prod-whatsapp-qr.loadbalancer.server.port=8080"
+        condition: service_healthy # Wait for php-fpm to start
 
   php-fpm:
-    # For the php-fpm service, we will use our common PHP-FPM Dockerfile with the production target
+    # For the php-fpm service, we will use our common PHP-FPM Dockerfile with the development target
     build:
       context: .
       dockerfile: ./.docker/common/php-fpm/Dockerfile
-      target: production
-      args:
-        UID: ${UID:-1000}
-        GID: ${GID:-1000}
+      target: production # Use the 'production' stage in the Dockerfile
+    restart: unless-stopped
+    volumes:
+      - ../files/laravel-storage-prod:/var/www/storage
     env_file:
       # Load the environment variables from the Laravel application
       - .env
-    user: "${UID:-1000}:${GID:-1000}"
-    volumes:
-      # Mount the application code for live updates
-      - ./:/var/www
+    healthcheck:
+      test: ["CMD-SHELL", "php-fpm-healthcheck || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     networks:
       - dokploy-network
 
@@ -44,18 +41,40 @@ services:
       context: .
       dockerfile: ./.docker/common/php-fpm/Dockerfile
       target: production
-      args:
-        UID: ${UID:-1000}
-        GID: ${GID:-1000}
+    volumes:
+      # Mount the same storage volume as php-fpm so the worker can access files
+      - ../files/laravel-storage-prod:/var/www/storage
     env_file:
       - .env
-    user: "${UID:-1000}:${GID:-1000}"
-    volumes:
-      - ./:/var/www
     networks:
       - dokploy-network
-    restart: always
-    command: php artisan queue:work database --sleep=3 --tries=3
+    restart: unless-stopped
+    entrypoint: ["/usr/local/bin/worker-entrypoint.sh"]
+    command: ["php", "artisan", "queue:work", "database", "--sleep=3", "--tries=3"]
+
+  # The 'websocket' service runs Laravel Reverb for real-time WebSocket connections.
+  # -----------------------------------------------------------
+  # This service handles broadcasting events to the frontend via WebSockets.
+  # It shares the same codebase and environment as the 'php-fpm' service.
+  # The port can be configured via REVERB_PORT (default: 8080).
+  # -----------------------------------------------------------
+  websocket:
+    build:
+      context: .
+      dockerfile: ./.docker/common/php-fpm/Dockerfile
+      target: production
+    volumes:
+      # Mount the same storage volume as php-fpm for consistency
+      - ../files/laravel-storage-prod:/var/www/storage
+    env_file:
+      - .env
+    networks:
+      - dokploy-network
+    restart: unless-stopped
+    command: ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080"]
+    depends_on:
+      php-fpm:
+        condition: service_healthy
 
 networks:
   dokploy-network:

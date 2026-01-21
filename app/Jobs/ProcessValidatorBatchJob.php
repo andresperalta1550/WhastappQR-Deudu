@@ -70,6 +70,14 @@ class ProcessValidatorBatchJob implements ShouldQueue
 
             // Validate if the phone number is valid
             $validationResult = $this->validatePhoneNumber($phoneNumber, $batch);
+
+            if (array_key_exists('error', $validationResult)) {
+                $record->update([
+                    'status' => ValidatorBatchTemp::STATUS_FAILED,
+                    'errors' => [$validationResult['error_message']]
+                ]);
+                continue;
+            }
             Log::info('Validation result:', $validationResult);
 
             // Update the register with the result

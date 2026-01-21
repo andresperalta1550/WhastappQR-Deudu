@@ -63,7 +63,7 @@ class ProcessValidatorBatchJob implements ShouldQueue
             if (!$phoneNumber) {
                 $record->update([
                     'status' => ValidatorBatchTemp::STATUS_FAILED,
-                    'error' => ['El número de teléfono es obligatorio']
+                    'errors' => ['El número de teléfono es obligatorio']
                 ]);
                 continue;
             }
@@ -102,27 +102,30 @@ class ProcessValidatorBatchJob implements ShouldQueue
             ->get();
 
         // Prepare headers
-        $headers = ['Celular', 'Validado', 'Motivo'];
+        $headers = ['Celular', 'Validado', 'Tiene Whatsapp', 'Motivo'];
 
         // Prepare data
         $data = [];
         foreach ($records as $record) {
+            $isValidated = $record->getStatus() === ValidatorBatchTemp::STATUS_COMPLETED ? 'SI' : 'NO';
             $validationResult = $record->getValidationResult() ?? [];
             if (!$validationResult['is_valid']) {
                 $data[] = [
                     $record->getData()['celular'] ?? $record->getData()['telefono'] ?? null,
+                    $isValidated,
                     'NO',
                     'El número de télefono no es valido.'
                 ];
                 continue;
             }
             $phoneNumber = $record->getData()['celular'] ?? $record->getData()['telefono'] ?? null;
-            $isValid = $validationResult['on_whatsapp'] ?? false;
+            $onWhatsapp = $validationResult['on_whatsapp'] ?? false;
 
             $data[] = [
                 $phoneNumber,
-                $isValid ? 'SI' : 'NO',
-                !$isValid ? 'El número no se encuentra en whatsapp' : null
+                $isValidated,
+                $onWhatsapp ? 'SI' : 'NO',
+                !$onWhatsapp ? 'El número no se encuentra en whatsapp' : null
             ];
         }
 
@@ -130,7 +133,7 @@ class ProcessValidatorBatchJob implements ShouldQueue
         $dto = new ExcelExportDTO(
             headers: $headers,
             data: $data,
-            fileName: "validacion-batch-{$batchId}.xlsx",
+            fileName: "validacion-batch-{$batchId}",
             directory: "validator-batches"
         );
 

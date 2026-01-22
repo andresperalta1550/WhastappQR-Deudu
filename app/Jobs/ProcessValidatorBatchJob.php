@@ -29,8 +29,6 @@ class ProcessValidatorBatchJob implements ShouldQueue
      */
     public function __construct(
         public string $batchId,
-        public int $offset,
-        public int $limit
     ) {
         $this->excelService = app(ExcelExportService::class);
     }
@@ -43,8 +41,6 @@ class ProcessValidatorBatchJob implements ShouldQueue
         // Obtain the records of the batch for processing
         $records = (new ValidatorBatchTemp())
             ->where('batch_id', $this->batchId)
-            ->skip($this->offset)
-            ->take($this->limit)
             ->get();
 
         // Always search if the batch exists

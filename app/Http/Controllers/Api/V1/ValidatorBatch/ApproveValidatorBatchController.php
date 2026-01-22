@@ -14,7 +14,6 @@ class ApproveValidatorBatchController extends Controller
 {
     public function __invoke(ValidatorBatch $batch, ApproveValidatorBatchRequest $request): \Illuminate\Http\JsonResponse
     {
-        DB::beginTransaction();
 
         // Validate if the batch is in pending status
         if ($batch->getStatus() !== ValidatorBatch::STATUS_PENDING) {
@@ -31,22 +30,11 @@ class ApproveValidatorBatchController extends Controller
             'approved_at' => now()
         ]);
 
-        // Obtain records of the batch for processing by chunks
-        $totalRecords = $batch->getTotalNumbers();
-        $chunkSize = 100;
-        $totalChunks = ceil($totalRecords / $chunkSize);
-
-        // Dispatch the jobs for processing the batch
-        for ($i = 0; $i < $totalChunks; $i++) {
-            // Process the chunk
-            ProcessValidatorBatchJob::dispatch(
-                batchId: $batch->getId(),
-                offset: $i * $chunkSize,
-                limit: $chunkSize
-            );
-        }
-
-        DB::commit();
+        // Dispatch the job for processing the batch
+        // Before we put multiple batch por use correctly 
+        ProcessValidatorBatchJob::dispatch(
+            batchId: $batch->getId()
+        );
 
         return response()->json([
             'success' => true,

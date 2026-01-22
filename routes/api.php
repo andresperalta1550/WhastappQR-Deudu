@@ -59,7 +59,7 @@ Route::prefix('v1')->group(function () {
         /**
          * Mark as unread
          */
-        Route::post('/{debtorId}/mark-as-unread', [\App\Http\Controllers\Api\V1\Message\PostMarkAsUnreadController::class, '__invoke']);
+        Route::post('/{debtorId}/mark-as-unread', [\App\Http\Controllers\Api\V1\Message\PostMarkAsUnreadByDebtorController::class, '__invoke']);
     });
 
     Route::prefix('conversations')->group(function () {
@@ -75,6 +75,11 @@ Route::prefix('v1')->group(function () {
          * Mark contact as resolved
          */
         Route::post('/{contact}/mark-as-resolved', [\App\Http\Controllers\Api\V1\Contact\MarkAsResolvedController::class, '__invoke']);
+
+        /**
+         * Mark contact as unread
+         */
+        Route::post('/{remotePhoneNumber}/mark-as-unread', [\App\Http\Controllers\Api\V1\Message\PostMarkAsUnreadByRemotePhoneNumberController::class, '__invoke']);
     });
 
 

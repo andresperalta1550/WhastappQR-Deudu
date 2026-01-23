@@ -45,7 +45,8 @@ class Channel extends Model
         'sync_contacts',
         'priority',
         'coordination_id',
-        'last_status_event'
+        'last_status_event',
+        'validator_usage'
     ];
 
     /**
@@ -402,5 +403,22 @@ class Channel extends Model
     public function coordination(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(User::class, 'coordination_id', 'id');
+    }
+
+    public static function getChannelByPhoneNumber(string $phoneNumber): ?self
+    {
+        return self::where('phone_number', $phoneNumber)->first();
+    }
+
+    /**
+     * Get the validator usage by coordination.
+     *
+     * @param int $coordinationId
+     * @return int
+     */
+    public static function validatorUsageByCoordination(int $coordinationId): int
+    {
+        return self::where('coordination_id', $coordinationId)
+            ->sum('validator_usage') ?? 0;
     }
 }

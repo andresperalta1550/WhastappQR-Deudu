@@ -85,6 +85,27 @@ Route::prefix('v1')->group(function () {
 
     Route::prefix('batches')->group(function () {
         Route::prefix('validator-numbers')->group(function () {
+            Route::prefix('limits')->group(function () {
+                /**
+                 * Get limits validator batch
+                 */
+                Route::get('/', [\App\Http\Controllers\Api\V1\ValidatorBatch\Limits\GetLimitsController::class, '__invoke']);
+
+                /**
+                 * Get types limits validator batch
+                 */
+                Route::get('/types', [\App\Http\Controllers\Api\V1\ValidatorBatch\Limits\GetTypesLimitsController::class, '__invoke']);
+
+                /**
+                 * Get periods limits validator batch
+                 */
+                Route::get('/periods', [\App\Http\Controllers\Api\V1\ValidatorBatch\Limits\GetPeriodsLimitsController::class, '__invoke']);
+
+                /**
+                 * Update or Create limit validator batch
+                 */
+                Route::put('/{limit}', [\App\Http\Controllers\Api\V1\ValidatorBatch\Limits\PutLimitController::class, '__invoke']);
+            });
             /**
              * Get all validator batches
              */

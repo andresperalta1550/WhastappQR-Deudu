@@ -2,15 +2,17 @@
 
 namespace App\Http\Controllers\Api\V1\ValidatorBatch;
 
+use App\Exceptions\BadRequestException;
+use App\Exceptions\NotFoundException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ValidatorBatch\CreateValidatorBatchRequest;
-use App\Models\User;
+use App\Models\Channel;
+use App\Models\LimitsValidatorBatch;
 use App\Models\ValidatorBatchTemp;
 use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Symfony\Component\HttpFoundation\Response;
 use App\Models\ValidatorBatch;
-use Illuminate\Http\Request;
 
 class CreateValidatorBatchController extends Controller
 {
@@ -18,7 +20,6 @@ class CreateValidatorBatchController extends Controller
         CreateValidatorBatchRequest $request
     ): \Illuminate\Http\JsonResponse {
         try {
-            DB::beginTransaction();
 
             $file = $request->file('file');
 
@@ -27,6 +28,12 @@ class CreateValidatorBatchController extends Controller
                     'success' => false,
                     'message' => 'Archivo inválido o no se pudo cargar correctamente'
                 ], Response::HTTP_BAD_REQUEST);
+            }
+
+            $channel = Channel::getChannelByPhoneNumber($request->getPhoneNumber());
+
+            if (!$channel) {
+                throw new NotFoundException("No se encontro un canal asociado a este número de telefono {$request->getPhoneNumber()}");
             }
 
             $consecutive = (new ValidatorBatch())->generateConsecutive();
@@ -50,11 +57,46 @@ class CreateValidatorBatchController extends Controller
                 throw new \Exception('Error al leer el archivo Excel: El archivo puede estar corrupto o tener un formato inválido');
             }
 
+            // Get the active worksheet
             $worksheet = $spreadsheet->getActiveSheet();
-            $rows = $worksheet->toArray();
+            // Get the highest row and column
+            $highestRow = $worksheet->getHighestDataRow();
+            // Get the highest column
+            $highestColumn = $worksheet->getHighestDataColumn();
+
+            // Get the range of cells
+            $rows = $worksheet->rangeToArray(
+                "A1:{$highestColumn}{$highestRow}",
+                null,
+                true,
+                true,
+                false
+            );
+
+            // Remove empty rows
+            $rows = array_values(array_filter(
+                $rows,
+                fn($row) =>
+                collect($row)->contains(fn($v) => $v !== null && $v !== '')
+            ));
 
             if (empty($rows) || count($rows) < 2) {
                 throw new \Exception('El archivo no contiene datos válidos');
+            }
+
+            $limit = LimitsValidatorBatch::where('type', 'by_administration')
+                ->first()
+                ->getLimit();
+
+            $validatorUsage = Channel::validatorUsageByCoordination($channel->getCoordinationId());
+
+            // Sum the number of rows to validate
+            $validatorUsage = $validatorUsage + count($rows);
+
+            if ($validatorUsage >= $limit) {
+                throw new BadRequestException(
+                    "No es posible realizar la validación. Solo hay " . $limit . " validaciones disponibles para ejecutar. Estas validando " . count($rows) . " registros."
+                );
             }
 
             // Remove and validate headers
@@ -121,8 +163,6 @@ class CreateValidatorBatchController extends Controller
             $batch->setTotalNumbers($totalRecords);
             $batch->save();
 
-            DB::commit();
-
             return response()->json([
                 'success' => true,
                 'message' => 'Lote de validación creado exitosamente',
@@ -134,12 +174,10 @@ class CreateValidatorBatchController extends Controller
                 ]
             ], Response::HTTP_OK);
         } catch (\Exception $e) {
-            DB::rollBack();
 
             \Log::error('Error creating validator batch', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'file' => $file ? $file->getClientOriginalName() : null
+                'trace' => $e->getTraceAsString()
             ]);
 
             return response()->json([

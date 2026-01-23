@@ -46,7 +46,8 @@ class Channel extends Model
         'priority',
         'coordination_id',
         'last_status_event',
-        'validator_usage'
+        'validator_usage',
+        'last_limit_reset'
     ];
 
     /**
@@ -67,6 +68,7 @@ class Channel extends Model
         'sync_contacts' => 'boolean',
         'priority' => 'integer',
         'coordination_id' => 'integer',
+        'last_limit_reset' => 'datetime',
 
         // Complex fields
         'last_status_event' => \App\Casts\LastStatusEventCast::class

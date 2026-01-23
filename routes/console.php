@@ -13,3 +13,7 @@ Schedule::job(new \App\Jobs\SyncWhatsappChannelsJob())
     ->everyFiveMinutes()
     ->name('sync-whatsapp-channels')
     ->withoutOverlapping();
+
+Schedule::job(new \App\Jobs\Limits\RestartLimitsJob())
+    ->dailyAt('00:00')
+    ->name('restart-limits');

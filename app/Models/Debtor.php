@@ -79,4 +79,9 @@ class Debtor extends Model
     {
         return $this->coordinator_id;
     }
+
+    public function getAnalyst(): int
+    {
+        return $this->analyst_id;
+    }
 }

@@ -15,6 +15,14 @@ Broadcast::channel('contacts.{userId}', function ($userId) {
 });
 
 /**
+ * Broadcast channel for contacts everywhere.
+ * Any client can listen to contact events.
+ */
+Broadcast::channel('contacts', function () {
+    return true;
+});
+
+/**
  * Broadcast channel for messages.
  * Any client can listen to message events.
  */

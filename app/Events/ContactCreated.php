@@ -32,6 +32,7 @@ class ContactCreated implements ShouldBroadcast
     {
         return [
             new Channel('contacts.' . $this->userId),
+            new Channel('contacts'),
         ];
     }
 

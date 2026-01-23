@@ -28,13 +28,14 @@ class ContactObserver
         $channel = Channel::getChannelByPhoneNumber($contact->getChannelPhoneNumber());
 
         // Get the coordination id from the channel
-        $userId = $channel->getCoordinationId();
         if ($debtorId) {
             $userId = (new Debtor())->find($debtorId)->getAnalyst();
             broadcast(new ContactCreatedEvent($contact, $userId));
         }
-
-        broadcast(new ContactCreatedEvent($contact, $userId));
+        $coordinationId = $channel->getCoordinationId();
+        if ($coordinationId) {
+            broadcast(new ContactCreatedEvent($contact, $coordinationId));
+        }
     }
 
     /**
@@ -51,13 +52,14 @@ class ContactObserver
         $channel = Channel::getChannelByPhoneNumber($contact->getChannelPhoneNumber());
 
         // Get the coordination id from the channel
-        $userId = $channel->getCoordinationId();
         if ($debtorId) {
             $userId = (new Debtor())->find($debtorId)->getAnalyst();
             broadcast(new ContactUpdatedEvent($contact, $userId));
         }
-
-        broadcast(new ContactUpdatedEvent($contact, $userId));
+        $coordinationId = $channel->getCoordinationId();
+        if ($coordinationId) {
+            broadcast(new ContactUpdatedEvent($contact, $coordinationId));
+        }
     }
 
     /**

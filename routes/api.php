@@ -59,7 +59,7 @@ Route::prefix('v1')->group(function () {
         /**
          * Mark as unread
          */
-        Route::post('/{debtorId}/mark-as-unread', [\App\Http\Controllers\Api\V1\Message\PostMarkAsUnreadController::class, '__invoke']);
+        Route::post('/{debtorId}/mark-as-unread', [\App\Http\Controllers\Api\V1\Message\PostMarkAsUnreadByDebtorController::class, '__invoke']);
     });
 
     Route::prefix('conversations')->group(function () {
@@ -75,11 +75,37 @@ Route::prefix('v1')->group(function () {
          * Mark contact as resolved
          */
         Route::post('/{contact}/mark-as-resolved', [\App\Http\Controllers\Api\V1\Contact\MarkAsResolvedController::class, '__invoke']);
+
+        /**
+         * Mark contact as unread
+         */
+        Route::post('/{remotePhoneNumber}/mark-as-unread', [\App\Http\Controllers\Api\V1\Message\PostMarkAsUnreadByRemotePhoneNumberController::class, '__invoke']);
     });
 
 
     Route::prefix('batches')->group(function () {
         Route::prefix('validator-numbers')->group(function () {
+            Route::prefix('limits')->group(function () {
+                /**
+                 * Get limits validator batch
+                 */
+                Route::get('/', [\App\Http\Controllers\Api\V1\ValidatorBatch\Limits\GetLimitsController::class, '__invoke']);
+
+                /**
+                 * Get types limits validator batch
+                 */
+                Route::get('/types', [\App\Http\Controllers\Api\V1\ValidatorBatch\Limits\GetTypesLimitsController::class, '__invoke']);
+
+                /**
+                 * Get periods limits validator batch
+                 */
+                Route::get('/periods', [\App\Http\Controllers\Api\V1\ValidatorBatch\Limits\GetPeriodsLimitsController::class, '__invoke']);
+
+                /**
+                 * Update or Create limit validator batch
+                 */
+                Route::put('/{limit}', [\App\Http\Controllers\Api\V1\ValidatorBatch\Limits\PutLimitController::class, '__invoke']);
+            });
             /**
              * Get all validator batches
              */

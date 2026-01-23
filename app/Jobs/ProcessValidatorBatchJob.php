@@ -29,8 +29,6 @@ class ProcessValidatorBatchJob implements ShouldQueue
      */
     public function __construct(
         public string $batchId,
-        public int $offset,
-        public int $limit
     ) {
         $this->excelService = app(ExcelExportService::class);
     }
@@ -43,8 +41,6 @@ class ProcessValidatorBatchJob implements ShouldQueue
         // Obtain the records of the batch for processing
         $records = (new ValidatorBatchTemp())
             ->where('batch_id', $this->batchId)
-            ->skip($this->offset)
-            ->take($this->limit)
             ->get();
 
         // Always search if the batch exists
@@ -63,13 +59,21 @@ class ProcessValidatorBatchJob implements ShouldQueue
             if (!$phoneNumber) {
                 $record->update([
                     'status' => ValidatorBatchTemp::STATUS_FAILED,
-                    'error' => ['El número de teléfono es obligatorio']
+                    'errors' => ['El número de teléfono es obligatorio']
                 ]);
                 continue;
             }
 
             // Validate if the phone number is valid
             $validationResult = $this->validatePhoneNumber($phoneNumber, $batch);
+
+            if (array_key_exists('error', $validationResult)) {
+                $record->update([
+                    'status' => ValidatorBatchTemp::STATUS_FAILED,
+                    'errors' => [$validationResult['error_message']]
+                ]);
+                continue;
+            }
             Log::info('Validation result:', $validationResult);
 
             // Update the register with the result
@@ -102,27 +106,39 @@ class ProcessValidatorBatchJob implements ShouldQueue
             ->get();
 
         // Prepare headers
-        $headers = ['Celular', 'Validado', 'Motivo'];
+        $headers = ['Celular', 'Validado', 'Tiene Whatsapp', 'Motivo'];
 
         // Prepare data
         $data = [];
         foreach ($records as $record) {
+            $isValidated = $record->getStatus() === ValidatorBatchTemp::STATUS_COMPLETED ? 'SI' : 'NO';
             $validationResult = $record->getValidationResult() ?? [];
-            if (!$validationResult['is_valid']) {
+            if (array_key_exists('error', $validationResult) && $validationResult['error']) {
                 $data[] = [
                     $record->getData()['celular'] ?? $record->getData()['telefono'] ?? null,
+                    $isValidated,
+                    'NO',
+                    $validationResult['error_message']
+                ];
+                continue;
+            }
+            if (array_key_exists('is_valid', $validationResult) && !$validationResult['is_valid']) {
+                $data[] = [
+                    $record->getData()['celular'] ?? $record->getData()['telefono'] ?? null,
+                    $isValidated,
                     'NO',
                     'El número de télefono no es valido.'
                 ];
                 continue;
             }
             $phoneNumber = $record->getData()['celular'] ?? $record->getData()['telefono'] ?? null;
-            $isValid = $validationResult['on_whatsapp'] ?? false;
+            $onWhatsapp = $validationResult['on_whatsapp'] ?? false;
 
             $data[] = [
                 $phoneNumber,
-                $isValid ? 'SI' : 'NO',
-                !$isValid ? 'El número no se encuentra en whatsapp' : null
+                $isValidated,
+                $onWhatsapp ? 'SI' : 'NO',
+                !$onWhatsapp ? 'El número no se encuentra en whatsapp' : null
             ];
         }
 
@@ -130,7 +146,7 @@ class ProcessValidatorBatchJob implements ShouldQueue
         $dto = new ExcelExportDTO(
             headers: $headers,
             data: $data,
-            fileName: "validacion-batch-{$batchId}.xlsx",
+            fileName: "validacion-batch-{$batchId}",
             directory: "validator-batches"
         );
 

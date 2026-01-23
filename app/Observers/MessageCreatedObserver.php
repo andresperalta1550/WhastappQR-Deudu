@@ -27,7 +27,10 @@ class MessageCreatedObserver
         ]);
 
         // Broadcast the MessageCreated event via WebSocket
-        broadcast(new MessageCreatedEvent($message));
+        $debtorId = $message->getDebtorId();
+        $remotePhoneNumber = $message->getRemotePhoneNumber();
+
+        broadcast(new MessageCreatedEvent($message, $debtorId, $remotePhoneNumber));
 
         // If the message is outbound, put the last message and return
         if ($message->getDirection() !== "inbound") {
@@ -149,6 +152,8 @@ class MessageCreatedObserver
         ]);
 
         // Broadcast the MessageUpdated event via WebSocket
-        broadcast(new \App\Events\MessageUpdated($message));
+        $debtorId = $message->getDebtorId();
+        $remotePhoneNumber = $message->getRemotePhoneNumber();
+        broadcast(new \App\Events\MessageUpdated($message, $debtorId, $remotePhoneNumber));
     }
 }

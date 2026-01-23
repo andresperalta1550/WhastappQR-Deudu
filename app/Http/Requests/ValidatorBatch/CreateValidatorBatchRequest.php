@@ -85,6 +85,8 @@ class CreateValidatorBatchRequest extends FormRequest
      */
     public function getPhoneNumber(): string
     {
-        return $this->validated('phone_number');
+        $phoneNumber = "+{$this->validated('phone_number')}";
+
+        return $phoneNumber;
     }
 }

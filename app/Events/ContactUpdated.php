@@ -3,6 +3,9 @@
 namespace App\Events;
 
 use App\Models\Contact;
+use App\Models\Debtor;
+use App\Models\Channel as ChannelModel;
+use App\Models\User;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -17,7 +20,8 @@ class ContactUpdated implements ShouldBroadcast
      * Create a new event instance.
      */
     public function __construct(
-        public Contact $contact
+        public Contact $contact,
+        public int $userId
     ) {
         //
     }
@@ -30,6 +34,7 @@ class ContactUpdated implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
+            new Channel('contacts.' . $this->userId),
             new Channel('contacts'),
         ];
     }
@@ -41,7 +46,24 @@ class ContactUpdated implements ShouldBroadcast
      */
     public function broadcastWith(): array
     {
-        return $this->contact->toArray();
+        $channel = ChannelModel::getChannelByPhoneNumber($this->contact->getChannelPhoneNumber());
+        if (!$channel && !$this->contact->getDebtorId()) {
+            return $this->contact->toArray();
+        }
+        $debtor = Debtor::find($this->contact->getDebtorId());
+        $coordination = User::find($channel->getCoordinationId());
+        $contact = $this->contact->toArray();
+        if ($debtor) {
+            $contact['debtor_fullname'] = $debtor->getFullname();
+            $contact['debtor_identification'] = $debtor->getIdentification();
+        }
+
+        if ($coordination) {
+            $contact['coordination_id'] = $coordination->getId();
+            $contact['coordination_fullname'] = $coordination->getName();
+        }
+
+        return $contact;
     }
 
     /**

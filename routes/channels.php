@@ -10,6 +10,14 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
  * Broadcast channel for contacts.
  * Any client can listen to contact events.
  */
+Broadcast::channel('contacts.{userId}', function ($userId) {
+    return true;
+});
+
+/**
+ * Broadcast channel for contacts everywhere.
+ * Any client can listen to contact events.
+ */
 Broadcast::channel('contacts', function () {
     return true;
 });
@@ -18,6 +26,15 @@ Broadcast::channel('contacts', function () {
  * Broadcast channel for messages.
  * Any client can listen to message events.
  */
-Broadcast::channel('messages', function () {
+Broadcast::channel('messages.by_debtor.{debtorId}', function ($debtorId) {
     return true;
 });
+
+/**
+ * Broadcast channel for messages by remote phone number.
+ * Any client can listen to message events.
+ */
+Broadcast::channel('messages.by_remote_phone_number.{remotePhoneNumber}', function ($remotePhoneNumber) {
+    return true;
+});
+

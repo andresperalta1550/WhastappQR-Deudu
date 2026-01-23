@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Message;
 use App\Models\Contact;
 
-class PostMarkAsUnreadController extends Controller
+class PostMarkAsUnreadByDebtorController extends Controller
 {
     public function __invoke(int $debtorId)
     {
@@ -26,7 +26,7 @@ class PostMarkAsUnreadController extends Controller
         }
 
         if ($contact) {
-            $contact->setUnreadMessages($contact->getUnreadMessages() + 1);
+            $contact->setUnreadMessages(1);
             $contact->save();
         }
 

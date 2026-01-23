@@ -18,7 +18,9 @@ class MessageCreated implements ShouldBroadcast
      * Create a new event instance.
      */
     public function __construct(
-        public Message $message
+        public Message $message,
+        public ?int $debtorId,
+        public ?string $remotePhoneNumber
     ) {
         //
     }
@@ -30,8 +32,15 @@ class MessageCreated implements ShouldBroadcast
      */
     public function broadcastOn(): array
     {
+        if ($this->debtorId) {
+            return [
+                new Channel('messages.by_debtor.' . $this->debtorId),
+            ];
+        }
+        $phone = $this->sanitizePhone($this->remotePhoneNumber);
+
         return [
-            new Channel('messages'),
+            new Channel('messages.by_remote_phone_number.' . $phone),
         ];
     }
 
@@ -59,5 +68,10 @@ class MessageCreated implements ShouldBroadcast
     public function broadcastAs(): string
     {
         return 'message.created';
+    }
+
+    private function sanitizePhone(string $phone): string
+    {
+        return preg_replace('/[^0-9]/', '', $phone);
     }
 }

@@ -70,6 +70,11 @@ class Debtor extends Model
         return $this->name . ' ' . $this->lastname;
     }
 
+    public function getIdentification(): string
+    {
+        return $this->identification;
+    }
+
     /**
      * Get the debtor coordinator ID.
      *
@@ -78,5 +83,10 @@ class Debtor extends Model
     public function getCoordinatorId(): int
     {
         return $this->coordinator_id;
+    }
+
+    public function getAnalyst(): int
+    {
+        return $this->analyst_id;
     }
 }

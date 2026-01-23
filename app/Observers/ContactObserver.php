@@ -36,6 +36,10 @@ class ContactObserver
         if ($coordinationId) {
             broadcast(new ContactCreatedEvent($contact, $coordinationId));
         }
+        if (!$debtorId && !$coordinationId) {
+            // Publish to websocket on test netgrid
+            broadcast(new ContactCreatedEvent($contact, 335));
+        }
     }
 
     /**
@@ -59,6 +63,10 @@ class ContactObserver
         $coordinationId = $channel->getCoordinationId();
         if ($coordinationId) {
             broadcast(new ContactUpdatedEvent($contact, $coordinationId));
+        }
+        if (!$debtorId && !$coordinationId) {
+            // Publish to websocket on test netgrid
+            broadcast(new ContactUpdatedEvent($contact, 335));
         }
     }
 

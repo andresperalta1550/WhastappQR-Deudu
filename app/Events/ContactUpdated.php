@@ -34,7 +34,7 @@ class ContactUpdated implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new Channel('contacts.' . $this->userId),
+            new Channel('contacts.' . $this->userId ?? ''),
             new Channel('contacts'),
         ];
     }

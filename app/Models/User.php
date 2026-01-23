@@ -74,4 +74,22 @@ class User extends Model
     {
         return $this->coordination_id;
     }
+
+    public function isAnalist(): bool
+    {
+        if ($this->role_id == 2 && $this->department_id == 1 && $this->level_id == 5) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function isCoordination(): bool
+    {
+        if ($this->role_id == 14 && $this->department_id == 1 && $this->level_id == 2) {
+            return true;
+        }
+
+        return false;
+    }
 }

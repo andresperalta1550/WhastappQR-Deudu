@@ -17,7 +17,8 @@ class ContactCreated implements ShouldBroadcast
      * Create a new event instance.
      */
     public function __construct(
-        public Contact $contact
+        public Contact $contact,
+        public int $userId
     ) {
         //
     }
@@ -30,7 +31,7 @@ class ContactCreated implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new Channel('contacts'),
+            new Channel('contacts.' . $this->userId),
         ];
     }
 

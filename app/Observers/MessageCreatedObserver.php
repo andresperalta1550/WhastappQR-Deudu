@@ -29,6 +29,7 @@ class MessageCreatedObserver
         // Broadcast the MessageCreated event via WebSocket
         $debtorId = $message->getDebtorId();
         $remotePhoneNumber = $message->getRemotePhoneNumber();
+
         broadcast(new MessageCreatedEvent($message, $debtorId, $remotePhoneNumber));
 
         // If the message is outbound, put the last message and return

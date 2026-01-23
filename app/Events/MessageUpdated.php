@@ -37,8 +37,9 @@ class MessageUpdated implements ShouldBroadcast
                 new Channel('messages.by_debtor.' . $this->debtorId),
             ];
         }
+        $phone = $this->sanitizePhone($this->remotePhoneNumber);
         return [
-            new Channel('messages.by_remote_phone_number.' . $this->remotePhoneNumber),
+            new Channel('messages.by_remote_phone_number.' . $phone),
         ];
     }
 
@@ -66,5 +67,10 @@ class MessageUpdated implements ShouldBroadcast
     public function broadcastAs(): string
     {
         return 'message.updated';
+    }
+
+    private function sanitizePhone(string $phone): string
+    {
+        return preg_replace('/[^0-9]/', '', $phone);
     }
 }

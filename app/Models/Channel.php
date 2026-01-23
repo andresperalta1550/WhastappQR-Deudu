@@ -363,6 +363,17 @@ class Channel extends Model
     }
 
     /**
+     * Set the validator usage of the channel.
+     *
+     * @param int $usage
+     * @return void
+     */
+    public function setValidatorUsage(int $usage): void
+    {
+        $this->validator_usage = $usage;
+    }
+
+    /**
      * Get the last status event of the channel.
      *
      * @return \App\ValueObjects\LastStatusEvent|null

@@ -163,6 +163,10 @@ class CreateValidatorBatchController extends Controller
             $batch->setTotalNumbers($totalRecords);
             $batch->save();
 
+            // Update the validator usage of the channel
+            $channel->setValidatorUsage($totalRecords);
+            $channel->save();
+
             return response()->json([
                 'success' => true,
                 'message' => 'Lote de validación creado exitosamente',

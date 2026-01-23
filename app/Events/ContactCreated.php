@@ -50,13 +50,18 @@ class ContactCreated implements ShouldBroadcast
         if (!$channel && !$this->contact->getDebtorId()) {
             return $this->contact->toArray();
         }
-        $debtor = Debtor::findOrFail($this->contact->getDebtorId());
-        $coordination = User::findOrFail($channel->getCoordinationId());
+        $debtor = Debtor::find($this->contact->getDebtorId());
+        $coordination = User::find($channel->getCoordinationId());
         $contact = $this->contact->toArray();
-        $contact['debtor_fullname'] = $debtor->getFullname();
-        $contact['debtor_identification'] = $debtor->getIdentification();
-        $contact['coordination_id'] = $coordination->getId();
-        $contact['coordination_fullname'] = $coordination->getName();
+        if ($debtor) {
+            $contact['debtor_fullname'] = $debtor->getFullname();
+            $contact['debtor_identification'] = $debtor->getIdentification();
+        }
+
+        if ($coordination) {
+            $contact['coordination_id'] = $coordination->getId();
+            $contact['coordination_fullname'] = $coordination->getName();
+        }
 
         return $contact;
     }

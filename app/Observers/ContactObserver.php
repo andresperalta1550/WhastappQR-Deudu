@@ -43,11 +43,6 @@ class ContactObserver
      */
     public function updated(Contact $contact): void
     {
-        Log::debug('[ContactObserver] Contact updated', [
-            'contact_id' => $contact->getId(),
-            'remote_phone_number' => $contact->getRemotePhoneNumber(),
-        ]);
-
         // Broadcast the ContactCreated event via WebSocket
         // Get the debtor id from the contact
         $debtorId = $contact->getDebtorId();
@@ -57,9 +52,15 @@ class ContactObserver
 
         // Get the coordination id from the channel
         $userId = $channel->getCoordinationId();
+        Log::debug('[ContactObserver] Contact updated', [
+            'contact_id' => $contact->getId(),
+            'remote_phone_number' => $contact->getRemotePhoneNumber(),
+            'userId' => $userId,
+            'debtorId' => $debtorId,
+        ]);
         if (!$userId && $debtorId) {
             $userId = (new Debtor())->find($debtorId)->getAnalyst();
-            broadcast(new ContactCreatedEvent($contact, $userId));
+            broadcast(new ContactUpdatedEvent($contact, $userId));
         }
 
         // Broadcast the ContactUpdated event via WebSocket

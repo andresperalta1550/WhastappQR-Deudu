@@ -21,7 +21,7 @@ class ContactUpdated implements ShouldBroadcast
      */
     public function __construct(
         public Contact $contact,
-        public int $userId
+        public ?int $userId
     ) {
         //
     }

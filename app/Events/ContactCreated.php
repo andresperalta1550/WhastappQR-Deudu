@@ -21,7 +21,7 @@ class ContactCreated implements ShouldBroadcast
      */
     public function __construct(
         public Contact $contact,
-        public int $userId
+        public ?int $userId
     ) {
         //
     }
@@ -34,7 +34,7 @@ class ContactCreated implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new Channel('contacts.' . $this->userId),
+            new Channel('contacts.' . $this->userId ?? ''),
             new Channel('contacts'),
         ];
     }

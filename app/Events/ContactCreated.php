@@ -3,6 +3,9 @@
 namespace App\Events;
 
 use App\Models\Contact;
+use App\Models\Debtor;
+use App\Models\Channel as ChannelModel;
+use App\Models\User;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -43,7 +46,19 @@ class ContactCreated implements ShouldBroadcast
      */
     public function broadcastWith(): array
     {
-        return $this->contact->toArray();
+        $channel = ChannelModel::getChannelByPhoneNumber($this->contact->getChannelPhoneNumber());
+        if (!$channel && !$this->contact->getDebtorId()) {
+            return $this->contact->toArray();
+        }
+        $debtor = Debtor::findOrFail($this->contact->getDebtorId());
+        $coordination = User::findOrFail($channel->getCoordinationId());
+        $contact = $this->contact->toArray();
+        $contact['debtor_fullname'] = $debtor->getFullname();
+        $contact['debtor_identification'] = $debtor->getIdentification();
+        $contact['coordination_id'] = $coordination->getId();
+        $contact['coordination_fullname'] = $coordination->getName();
+
+        return $contact;
     }
 
     /**

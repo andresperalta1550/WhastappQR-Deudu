@@ -32,6 +32,7 @@ class ContactObserver
         $userId = $channel->getCoordinationId();
         if (!$userId && $debtorId) {
             $userId = (new Debtor())->find($debtorId)->getAnalyst();
+            broadcast(new ContactCreatedEvent($contact, $userId));
         }
 
         broadcast(new ContactCreatedEvent($contact, $userId));
@@ -58,6 +59,7 @@ class ContactObserver
         $userId = $channel->getCoordinationId();
         if (!$userId && $debtorId) {
             $userId = (new Debtor())->find($debtorId)->getAnalyst();
+            broadcast(new ContactCreatedEvent($contact, $userId));
         }
 
         // Broadcast the ContactUpdated event via WebSocket

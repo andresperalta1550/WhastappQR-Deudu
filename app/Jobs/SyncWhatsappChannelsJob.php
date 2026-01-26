@@ -71,12 +71,9 @@ class SyncWhatsappChannelsJob implements ShouldQueue, ShouldBeUnique
             $numberUuids = array_filter(array_column($allNumbers, 'uuid'));
 
             // Obtain all existing channel_uuids from the database
-            $existingUuids = Channel::whereIn('channel_uuid', $numberUuids)
+            $existingUuids = Channel::get()
                 ->pluck('channel_uuid')
                 ->toArray();
-
-            // Create a set for faster lookup
-            $existingUuidsSet = array_flip($existingUuids);
 
             // UUIDs that exist in the database but are not in the synchronization
             $missingUuids = array_diff($existingUuids, $numberUuids);
@@ -106,11 +103,8 @@ class SyncWhatsappChannelsJob implements ShouldQueue, ShouldBeUnique
                     continue; // Skip if no UUID
                 }
 
-                // Verify if the channel already exists (using the set for O(1) lookup)
-                $exists = isset($existingUuidsSet[$uuid]);
-
                 try {
-                    $result = (new StoreChannelAction())->handle($number, $exists);
+                    $result = (new StoreChannelAction())->handle($number);
 
                     if ($result === 'created') {
                         $created++;

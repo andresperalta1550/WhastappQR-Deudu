@@ -84,7 +84,7 @@ class SyncWhatsappChannelsJob implements ShouldQueue, ShouldBeUnique
             if (!empty($missingUuids)) {
                 Channel::whereIn('channel_uuid', $missingUuids)
                     ->update([
-                        'connection_status' => 'E',
+                        'connection_status' => 'deleted_from_a2chat',
                         'enabled' => false,
                     ]);
 

@@ -8,15 +8,14 @@ class StoreChannelAction
      * Handle storing or updating a channel based on provided data.
      *
      * @param array $data
-     * @param bool $exists
      * @return string
      */
-    public function handle(array $data, ?bool $exists = false): string
+    public function handle(array $data): string
     {
         $uuid = $data['uuid'] ?? null;
 
         // Skip if UUID is not provided or if the channel already exists
-        if (!$uuid || $exists) {
+        if (!$uuid) {
             return 'skipped';
         }
 

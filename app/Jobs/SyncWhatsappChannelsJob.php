@@ -78,6 +78,21 @@ class SyncWhatsappChannelsJob implements ShouldQueue, ShouldBeUnique
             // Create a set for faster lookup
             $existingUuidsSet = array_flip($existingUuids);
 
+            // UUIDs that exist in the database but are not in the synchronization
+            $missingUuids = array_diff($existingUuids, $numberUuids);
+
+            if (!empty($missingUuids)) {
+                Channel::whereIn('channel_uuid', $missingUuids)
+                    ->update([
+                        'connection_status' => 'deleted_from_a2chat',
+                        'enabled' => false,
+                    ]);
+
+                Log::info('Channels disabled because they do not exist in synchronization', [
+                    'count' => count($missingUuids),
+                ]);
+            }
+
             // Process each number
             $created = 0;
             $updated = 0;

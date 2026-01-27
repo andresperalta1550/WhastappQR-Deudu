@@ -10,6 +10,10 @@ services:
       - "80:80"
       - "443:443"
       - "8080:8080"
+    ulimits:
+      nofile:
+        soft: 200000
+        hard: 200000
     networks:
       - dokploy-network
     depends_on:
@@ -48,6 +52,10 @@ services:
       - .env
     networks:
       - dokploy-network
+    ulimits:
+      nofile:
+        soft: 200000
+        hard: 200000
     restart: unless-stopped
     entrypoint: ["/usr/local/bin/worker-entrypoint.sh"]
     command: ["php", "artisan", "queue:work", "database", "--sleep=3", "--tries=3"]

@@ -13,6 +13,7 @@ class GetCoordinationByChannelController extends Controller
     public function __invoke(string $channel_phone_number): JsonResponse
     {
         $channel = Channel::where('phone_number', $channel_phone_number)
+            ->where('enabled', true)
             ->first();
 
         if (!$channel) {

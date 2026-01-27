@@ -21,6 +21,11 @@ Route::prefix('v1')->group(function () {
         Route::get('/associated/{coordinationId}', [\App\Http\Controllers\Api\V1\Channel\GetChannelsAssociatedWithCoordinationController::class, '__invoke']);
 
         /**
+         * Get coordination by channel.
+         */
+        Route::get('/coordination/{channel}', [\App\Http\Controllers\Api\V1\Channel\GetCoordinationByChannelController::class, '__invoke']);
+
+        /**
          * Put coordination id to channel
          */
         Route::put('/{channel}', [\App\Http\Controllers\Api\V1\Channel\PutChannelController::class, '__invoke']);

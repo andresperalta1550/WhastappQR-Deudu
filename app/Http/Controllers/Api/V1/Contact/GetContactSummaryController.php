@@ -350,7 +350,7 @@ class GetContactSummaryController extends Controller
         $data = $result['data'];
 
         // Enrich data with debtor information
-        $data = $this->enrichWithDebtorAndCoordinationInfo($data);
+        $data = $this->enrichWithDebtorInfo($data);
 
         return response()->json([
             'success' => true,
@@ -367,12 +367,12 @@ class GetContactSummaryController extends Controller
     }
 
     /**
-     * Enrich contact data with debtor information, coordination_id, and coordination_fullname.
+     * Enrich contact data with debtor information.
      *
      * @param array $contacts
      * @return array
      */
-    protected function enrichWithDebtorAndCoordinationInfo(array $contacts): array
+    protected function enrichWithDebtorInfo(array $contacts): array
     {
         if (empty($contacts)) {
             return $contacts;
@@ -380,36 +380,16 @@ class GetContactSummaryController extends Controller
 
         // Collect all unique IDs and phone numbers in one pass
         $debtorIds = [];
-        $channelPhoneNumbers = [];
 
         foreach ($contacts as $contact) {
             if (isset($contact['debtor_id']) && $contact['debtor_id'] !== null) {
                 $debtorIds[$contact['debtor_id']] = true;
-            }
-            if (isset($contact['channel_phone_number']) && $contact['channel_phone_number'] !== null) {
-                $channelPhoneNumbers[$contact['channel_phone_number']] = true;
             }
         }
 
         // Fetch all necessary data in parallel
         $debtors = !empty($debtorIds)
             ? \App\Models\Debtor::whereIn('id', array_keys($debtorIds))->get()->keyBy('id')
-            : collect();
-
-        $channels = !empty($channelPhoneNumbers)
-            ? \App\Models\Channel::whereIn('phone_number', array_keys($channelPhoneNumbers))->get()->keyBy('phone_number')
-            : collect();
-
-        // Extract coordination_ids from channels
-        $coordinationIds = $channels
-            ->pluck('coordination_id')
-            ->filter()
-            ->unique()
-            ->toArray();
-
-        // Fetch coordinators
-        $coordinators = !empty($coordinationIds)
-            ? \App\Models\User::whereIn('id', $coordinationIds)->get()->keyBy('id')
             : collect();
 
         // Single pass enrichment
@@ -419,28 +399,10 @@ class GetContactSummaryController extends Controller
             if ($debtorId && $debtors->has($debtorId)) {
                 $debtor = $debtors[$debtorId];
                 $contact['debtor_fullname'] = $debtor->getFullname();
-                $contact['debtor_identification'] = $debtor->identification ?? null;
+                $contact['debtor_identification'] = $debtor->identification;
             } else {
                 $contact['debtor_fullname'] = null;
                 $contact['debtor_identification'] = null;
-            }
-
-            // Enrich coordination information
-            $channelPhoneNumber = $contact['channel_phone_number'] ?? null;
-            if ($channelPhoneNumber && $channels->has($channelPhoneNumber)) {
-                $channel = $channels[$channelPhoneNumber];
-                $coordinationId = $channel->getCoordinationId();
-                $contact['coordination_id'] = $coordinationId;
-
-                // Add coordination_fullname
-                if ($coordinationId && $coordinators->has($coordinationId)) {
-                    $contact['coordination_fullname'] = $coordinators[$coordinationId]->getFullname();
-                } else {
-                    $contact['coordination_fullname'] = null;
-                }
-            } else {
-                $contact['coordination_id'] = null;
-                $contact['coordination_fullname'] = null;
             }
         }
 

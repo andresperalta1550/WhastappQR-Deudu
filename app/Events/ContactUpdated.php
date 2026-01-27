@@ -51,16 +51,10 @@ class ContactUpdated implements ShouldBroadcast
             return $this->contact->toArray();
         }
         $debtor = Debtor::find($this->contact->getDebtorId());
-        $coordination = User::find($channel->getCoordinationId());
         $contact = $this->contact->toArray();
         if ($debtor) {
             $contact['debtor_fullname'] = $debtor->getFullname();
             $contact['debtor_identification'] = $debtor->getIdentification();
-        }
-
-        if ($coordination) {
-            $contact['coordination_id'] = $coordination->getId();
-            $contact['coordination_fullname'] = $coordination->getName();
         }
 
         return $contact;

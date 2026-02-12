@@ -50,7 +50,9 @@ class DownloadMediaJob implements ShouldQueue
         $binaryData = $response->body();
 
         // Create a unique filename
-        $filename = "media/{$this->messageId}_" . basename($this->remoteUrl);
+        // In some cases the remote URL basename have a charset that is not supported by the filesystem,
+        // so we need to use the message ID as the filename. And we use the extension from the remote URL.
+        $filename = "media/{$this->messageId}." . pathinfo($this->remoteUrl, PATHINFO_EXTENSION);
 
         Storage::disk('public')->put(
             $filename,

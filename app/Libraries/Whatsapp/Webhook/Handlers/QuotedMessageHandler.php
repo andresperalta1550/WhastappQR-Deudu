@@ -11,7 +11,7 @@ class QuotedMessageHandler extends MessageHandler
     {
         $model = $this->baseModel();
 
-        $messageQuoted = $this->event->payload['message']['quoted_msg']['message'] ?? '';
+        $messageQuoted = $this->event->payload['message']['quoted_msg']['message']['text'] ?? '';
 
         $model->setText($this->event->payload['message']['text'] ?? '');
         $model->setQuoted(new Quoted(

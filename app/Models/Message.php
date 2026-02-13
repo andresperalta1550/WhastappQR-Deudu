@@ -7,6 +7,7 @@ use App\Observers\MessageCreatedObserver;
 use App\ValueObjects\Delivery;
 use App\ValueObjects\Edited;
 use App\ValueObjects\Media;
+use App\ValueObjects\Quoted;
 use App\ValueObjects\Reaction;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
@@ -49,6 +50,7 @@ class Message extends Model
         'debtor_id',
         'direction',
         'sent_by',
+        'quoted',
         'source',
         'sent_user_by',
         'type',
@@ -93,7 +95,8 @@ class Message extends Model
         'delivery' => \App\Casts\DeliveryCast::class,
         'reactions' => \App\Casts\ReactionsCast::class,
         'edited' => \App\Casts\EditedCast::class,
-        'object_id' => \App\Casts\AsObjectId::class
+        'object_id' => \App\Casts\AsObjectId::class,
+        'quoted' => \App\Casts\QuotedCast::class,
     ];
 
     /**
@@ -543,6 +546,16 @@ class Message extends Model
     public function setRawPayload(mixed $value): void
     {
         $this->raw_payload = $value;
+    }
+
+    public function getQuoted(): ?Quoted
+    {
+        return $this->quoted;
+    }
+
+    public function setQuoted(?Quoted $value): void
+    {
+        $this->quoted = $value;
     }
 
     /**

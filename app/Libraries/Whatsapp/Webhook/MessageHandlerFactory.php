@@ -5,6 +5,7 @@ namespace App\Libraries\Whatsapp\Webhook;
 use App\Libraries\Whatsapp\Webhook\Events\MessageEvent;
 use App\Libraries\Whatsapp\Webhook\Handlers\MediaHandler;
 use App\Libraries\Whatsapp\Webhook\Handlers\MessageHandler;
+use App\Libraries\Whatsapp\Webhook\Handlers\QuotedMessageHandler;
 use App\Libraries\Whatsapp\Webhook\Handlers\TextHandler;
 
 class MessageHandlerFactory
@@ -15,7 +16,7 @@ class MessageHandlerFactory
      */
     public static function create(
         MessageEvent $event
-    ): MessageHandler | array {
+    ): MessageHandler|array {
         $message = $event->payload['message'] ?? [];
 
         if (count($message) === 1) {
@@ -24,6 +25,7 @@ class MessageHandlerFactory
             return match ($type) {
                 'text' => new TextHandler($event),
                 'media' => new MediaHandler($event),
+                'quoted_msg' => new QuotedMessageHandler($event),
                 default => throw new \InvalidArgumentException("Unsupported message type: $type"),
             };
         }
@@ -35,6 +37,7 @@ class MessageHandlerFactory
             $handlers[] = match ($type) {
                 'text' => new TextHandler($event),
                 'media' => new MediaHandler($event),
+                'quoted_msg' => new QuotedMessageHandler($event),
                 default => throw new \InvalidArgumentException("Unsupported message type: $type"),
             };
         }

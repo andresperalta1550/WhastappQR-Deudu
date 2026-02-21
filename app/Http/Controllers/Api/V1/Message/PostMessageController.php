@@ -7,6 +7,7 @@ use App\Exceptions\BadRequestException;
 use App\Exceptions\ExternalServiceException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Message\SendMessageRequest;
+use App\Jobs\ResolveOutgoingMessageContactJob;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
@@ -43,6 +44,8 @@ class PostMessageController extends Controller
         }
 
         $message = $storeMessageAction->handle($data);
+
+        ResolveOutgoingMessageContactJob::dispatch($message);
 
         return response()->json([
             'status' => 'success',

@@ -63,7 +63,7 @@ class GetSummaryConversationsController extends Controller
             $matchStage,
 
             // Order by updated_at desc
-            ['$sort' => ['updated_at' => -1]],
+            ['$sort' => ['delivery.sent_at' => -1]],
 
             // Group by debtor_id (last contact)
             [
@@ -83,7 +83,7 @@ class GetSummaryConversationsController extends Controller
                         ['$count' => 'total']
                     ],
                     'data' => [
-                        ['$sort' => ['updated_at' => -1]],
+                        ['$sort' => ['delivery.sent_at' => -1]],
                         ['$skip' => $skip],
                         ['$limit' => $perPage]
                     ]

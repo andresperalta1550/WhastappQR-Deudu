@@ -95,18 +95,34 @@ services:
       - laravel-development
 
   mongo:
-    image: mongo:latest
+    image: mongo:8
     restart: always
     environment:
-        MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
-        MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+        MONGO_INITDB_ROOT_USERNAME: admin
+        MONGO_INITDB_ROOT_PASSWORD: admin123
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data-development:/data/db
     networks:
       - laravel-development
 
-
+  mysql:
+    image: mysql:8.0
+    restart: always
+    environment:
+        MYSQL_ROOT_PASSWORD: admin123
+        MYSQL_DATABASE: whatsappqr
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysqldb-data-development:/var/lib/mysql
+    networks:
+      - laravel-development
 
 networks:
   laravel-development:
 
 volumes:
   mongo-data-development:
+  mysqldb-data-development:

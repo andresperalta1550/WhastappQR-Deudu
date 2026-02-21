@@ -18,6 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpng-dev \
     libfreetype6-dev \
     libwebp-dev \
+    libpng16-16 \
     && docker-php-ext-configure gd \
         --with-jpeg \
         --with-freetype \
@@ -74,6 +75,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     libicu-dev \
     libzip-dev \
+    libpng16-16 \
+    libjpeg62-turbo \
+    libfreetype6 \
+    libwebp7 \
     libfcgi-bin \
     procps \
     wget \
@@ -171,6 +176,9 @@ RUN if [ "${XDEBUG_ENABLED}" = "true" ]; then \
     echo "xdebug.client_host=${XDEBUG_HOST}" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini ; \
     echo "xdebug.start_with_request=yes" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini ; \
 fi
+
+# Copy Composer from the builder stage so it's available for development
+COPY --from=builder /usr/local/bin/composer /usr/local/bin/composer
 
 # Add ARGs for syncing permissions
 ARG UID=1000

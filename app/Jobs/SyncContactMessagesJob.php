@@ -207,7 +207,7 @@ class SyncContactMessagesJob implements ShouldQueue, ShouldBeUnique
     {
         try {
             $this->contact->setLastSyncedAt(now());
-            $this->contact->save();
+            $this->contact->saveQuietly();
         } catch (\Throwable $e) {
             Log::warning('[SyncContactMessagesJob] Failed to update last_synced_at', [
                 'contact_id' => $this->contact->getId(),

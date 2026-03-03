@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Api\V1\Message;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PaginationRequest;
-use Illuminate\Support\Facades\Log;
+use App\Jobs\SyncContactMessagesJob;
+use App\Models\Contact;
 use App\Models\Message;
 use App\Models\User;
+use Illuminate\Support\Facades\Log;
 
 class GetMessagesByRemothePhoneNumberController extends Controller
 {
@@ -50,6 +52,11 @@ class GetMessagesByRemothePhoneNumberController extends Controller
 
         $this->updateUnreadMessagesCount($remotePhoneNumber);
 
+        // Dispatch a background sync to fill any messages missed by webhook failures.
+        // The job is unique per conversation pair and rate-limited by last_synced_at,
+        // so it runs at most once every N minutes (default: 10).
+        $this->dispatchSyncIfNeeded($remotePhoneNumber);
+
         return response()->json([
             'success' => true,
             'data' => $messagesResponse,
@@ -60,6 +67,46 @@ class GetMessagesByRemothePhoneNumberController extends Controller
                 'total' => $paginator->total(),
             ],
         ]);
+    }
+
+    /**
+     * Dispatch a background sync job for this conversation if enough time
+     * has passed since the last sync.
+     *
+     * @param string $remotePhoneNumber
+     * @return void
+     */
+    private function dispatchSyncIfNeeded(string $remotePhoneNumber): void
+    {
+        $contact = Contact::where('remote_phone_number', $remotePhoneNumber)->first();
+
+        if (!$contact || !$contact->getChannelPhoneNumber()) {
+            return;
+        }
+
+        $intervalMinutes = (int) config('services.whatsapp.sync_interval_minutes', 10);
+        $lastSync        = $contact->getLastSyncedAt();
+        $shouldSync      = $lastSync === null
+            || $lastSync->lt(now()->subMinutes($intervalMinutes));
+
+        if (!$shouldSync) {
+            Log::debug('[GetMessagesByRemothePhoneNumberController] Sync skipped (recently synced)', [
+                'remote_phone_number' => $remotePhoneNumber,
+                'last_synced_at'      => $lastSync?->toIso8601String(),
+            ]);
+            return;
+        }
+
+        Log::debug('[GetMessagesByRemothePhoneNumberController] Dispatching SyncContactMessagesJob', [
+            'remote_phone_number'  => $remotePhoneNumber,
+            'channel_phone_number' => $contact->getChannelPhoneNumber(),
+        ]);
+
+        SyncContactMessagesJob::dispatch(
+            $contact->getChannelPhoneNumber(),
+            $remotePhoneNumber,
+            $contact
+        );
     }
 
     /**

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api\V1\Message;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SyncContactMessagesJob;
+use App\Models\Contact;
 use App\Models\Message;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -66,6 +68,9 @@ class GetMessagesByDebtorController extends Controller
 
         $this->updateUnreadMessagesCount($debtorId);
 
+        // Dispatch a background sync to fill any messages missed by webhook failures.
+        $this->dispatchSyncIfNeeded($debtorId);
+
         if (!empty($currentGroup)) {
             $groups[] = $currentGroup;
         }
@@ -80,6 +85,47 @@ class GetMessagesByDebtorController extends Controller
                 'total' => $paginator->total(),
             ],
         ]);
+    }
+
+    /**
+     * Dispatch a background sync job for contacts linked to a debtor,
+     * covering all unique channel+remote pairs that debtor has.
+     *
+     * @param int $debtorId
+     * @return void
+     */
+    private function dispatchSyncIfNeeded(int $debtorId): void
+    {
+        $contact = Contact::where('debtor_id', $debtorId)->first();
+
+        if (!$contact || !$contact->getChannelPhoneNumber()) {
+            return;
+        }
+
+        $intervalMinutes = (int) config('services.whatsapp.sync_interval_minutes', 10);
+        $lastSync        = $contact->getLastSyncedAt();
+        $shouldSync      = $lastSync === null
+            || $lastSync->lt(now()->subMinutes($intervalMinutes));
+
+        if (!$shouldSync) {
+            Log::debug('[GetMessagesByDebtorController] Sync skipped (recently synced)', [
+                'debtor_id'      => $debtorId,
+                'last_synced_at' => $lastSync?->toIso8601String(),
+            ]);
+            return;
+        }
+
+        Log::debug('[GetMessagesByDebtorController] Dispatching SyncContactMessagesJob', [
+            'debtor_id'            => $debtorId,
+            'channel_phone_number' => $contact->getChannelPhoneNumber(),
+            'remote_phone_number'  => $contact->getRemotePhoneNumber(),
+        ]);
+
+        SyncContactMessagesJob::dispatch(
+            $contact->getChannelPhoneNumber(),
+            $contact->getRemotePhoneNumber(),
+            $contact
+        );
     }
 
     /**

@@ -39,6 +39,7 @@ return [
         'api_url' => env('WHATSAPP_API_URL', 'https://api.p.2chat.io/open/whatsapp'),
         'api_key' => env('WHATSAPP_API_KEY'),
         'phone_number' => env('WHATSAPP_PHONE_NUMBER'),
+        'sync_interval_minutes' => env('WHATSAPP_SYNC_INTERVAL_MINUTES', 10),
     ],
 
     'oracle' => [

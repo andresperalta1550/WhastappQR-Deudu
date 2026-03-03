@@ -41,7 +41,8 @@ class Contact extends Model
         'unread_messages',
         'last_messages_events',
         'last_message',
-        'is_resolved'
+        'is_resolved',
+        'last_synced_at',
     ];
 
     /**
@@ -57,6 +58,7 @@ class Contact extends Model
         'on_whatsapp' => 'boolean',
         'unread_messages' => 'integer',
         'is_resolved' => 'boolean',
+        'last_synced_at' => 'datetime',
 
         // Complex fields
         'normalized_number' => \App\Casts\NormalizedNumberCast::class,
@@ -238,5 +240,15 @@ class Contact extends Model
     public function setIsResolved(bool $value): void
     {
         $this->is_resolved = $value;
+    }
+
+    public function getLastSyncedAt(): ?\Carbon\Carbon
+    {
+        return $this->last_synced_at;
+    }
+
+    public function setLastSyncedAt(?\Carbon\Carbon $value): void
+    {
+        $this->last_synced_at = $value;
     }
 }

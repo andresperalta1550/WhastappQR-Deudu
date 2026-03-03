@@ -152,4 +152,40 @@ class Client
     {
         $this->phoneNumber = $phoneNumber;
     }
+
+    /**
+     * Get the messages of a WhatsApp conversation from the 2Chat API.
+     *
+     * @param string $channelPhoneNumber The channel phone number (e.g. +573224816062)
+     * @param string $remotePhoneNumber  The contact phone number (e.g. +573224220769)
+     * @return array The response from the 2Chat API (keys: success, messages)
+     * @throws ConnectionException
+     */
+    public function getMessages(string $channelPhoneNumber, string $remotePhoneNumber): array
+    {
+        // Normalize: ensure both numbers have the '+' prefix
+        if (!str_starts_with($channelPhoneNumber, '+')) {
+            $channelPhoneNumber = '+' . $channelPhoneNumber;
+        }
+
+        if (!str_starts_with($remotePhoneNumber, '+')) {
+            $remotePhoneNumber = '+' . $remotePhoneNumber;
+        }
+
+        $url = "{$this->apiUrl}/messages/{$channelPhoneNumber}/{$remotePhoneNumber}";
+
+        $response = Http::withHeaders([
+            'Content-Type'   => 'application/json',
+            'X-User-API-Key' => $this->apiKey,
+        ])->timeout($this->timeout)->get($url);
+
+        if ($response->failed()) {
+            return [
+                'success'  => false,
+                'messages' => [],
+            ];
+        }
+
+        return $response->json();
+    }
 }

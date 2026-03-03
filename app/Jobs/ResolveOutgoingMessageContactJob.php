@@ -95,6 +95,13 @@ class ResolveOutgoingMessageContactJob implements ShouldQueue
             $this->message->getRemotePhoneNumber(),
             $contact->getNumberInfo()->getIsoCountryCode()
         );
+
+        // Some phone numbers are not valid, skip debtor resolution
+        if (!$phone) {
+            Log::debug("[ResolveIncomingMessageContactJob] Phone not found, skipping debtor resolution");
+            return;
+        }
+
         $debtorData = $resolver->resolve($phone, $this->message->getMessageUuid());
 
         Log::debug("[ResolveOutgoingMessageContactJob] Debtor resolver response", [

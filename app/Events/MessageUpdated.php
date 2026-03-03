@@ -37,10 +37,13 @@ class MessageUpdated implements ShouldBroadcast
                 new Channel('messages.by_debtor.' . $this->debtorId),
             ];
         }
-        $phone = $this->sanitizePhone($this->remotePhoneNumber);
-        return [
-            new Channel('messages.by_remote_phone_number.' . $phone),
-        ];
+        if ($this->remotePhoneNumber) {
+            $phone = $this->sanitizePhone($this->remotePhoneNumber);
+            return [
+                new Channel('messages.by_remote_phone_number.' . $phone),
+            ];
+        }
+        return [];
     }
 
     /**

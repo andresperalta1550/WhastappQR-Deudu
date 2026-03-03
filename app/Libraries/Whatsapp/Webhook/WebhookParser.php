@@ -90,7 +90,6 @@ class WebhookParser
         $event->message = $data['message'];
         $event->reaction = $data['reaction'];
         $event->timestamp = $data['message']['created_at'];
-        $event->payload = $data;
 
         return $event;
     }
@@ -102,7 +101,6 @@ class WebhookParser
         $event->uuid = $data['message']['uuid'];
         $event->message = $data['message']['message'];
         $event->timestamp = $data['message']['edited_at'];
-        $event->payload = $data;
 
         return $event;
     }

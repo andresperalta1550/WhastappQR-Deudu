@@ -59,6 +59,7 @@ class ResolveOutgoingMessageContactJob implements ShouldQueue
 
         $contact = (new Contact())
             ->where('remote_phone_number', $this->message->getRemotePhoneNumber())
+            ->where('channel_phone_number', $this->message->getChannelPhoneNumber())
             ->first();
 
         // If not found, create it

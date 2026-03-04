@@ -17,3 +17,8 @@ Schedule::job(new \App\Jobs\SyncWhatsappChannelsJob())
 Schedule::job(new \App\Jobs\Limits\RestartLimitsJob())
     ->dailyAt('00:00')
     ->name('restart-limits');
+
+Schedule::job(new \App\Jobs\BackfillMessageDebtorIdJob())
+    ->hourly()
+    ->name('backfill-message-debtor-id')
+    ->withoutOverlapping();

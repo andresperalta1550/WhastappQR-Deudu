@@ -6,8 +6,6 @@ services:
     volumes:
       - ../files/laravel-storage-staging:/var/www/storage
       - ../certs/whatsappqr-test.deudu.co:/etc/ssl/certs/whatsappqr-test.deudu.co
-    ports:
-      - "8080:8080"
     networks:
       - dokploy-network
     depends_on:
@@ -15,30 +13,34 @@ services:
         condition: service_healthy # Wait for php-fpm to start
     labels:
       - traefik.enable=true
-      # Router HTTP (solo redirige)
+
+      # Router HTTP (redirige)
       - traefik.http.routers.whatsappqr-test-http.rule=Host(`whatsappqr-test.deudu.co`)
       - traefik.http.routers.whatsappqr-test-http.entrypoints=web
       - traefik.http.routers.whatsappqr-test-http.middlewares=redirect-https
+      - traefik.http.routers.whatsappqr-test-http.service=whatsappqr-test
 
-      # Middleware de redirección
+      # Middleware redirect
       - traefik.http.middlewares.redirect-https.redirectscheme.scheme=https
 
-      # Router HTTPS
+      # Router HTTPS (APP)
       - traefik.http.routers.whatsappqr-test-https.rule=Host(`whatsappqr-test.deudu.co`)
       - traefik.http.routers.whatsappqr-test-https.entrypoints=websecure
       - traefik.http.routers.whatsappqr-test-https.tls=true
+      - traefik.http.routers.whatsappqr-test-https.service=whatsappqr-test
 
-      # Internal service
+      # Service HTTP
       - traefik.http.services.whatsappqr-test.loadbalancer.server.port=80
 
       # =========================
-      # WEBSOCKETS (puerto 8080)
+      # WEBSOCKETS
       # =========================
       - traefik.http.routers.whatsappqr-test-ws.rule=Host(`whatsappqr-test.deudu.co`) && PathPrefix(`/ws`)
       - traefik.http.routers.whatsappqr-test-ws.entrypoints=websecure
       - traefik.http.routers.whatsappqr-test-ws.tls=true
-      - traefik.http.services.whatsappqr-test-ws.loadbalancer.server.port=8080
+      - traefik.http.routers.whatsappqr-test-ws.service=whatsappqr-test-ws
 
+      - traefik.http.services.whatsappqr-test-ws.loadbalancer.server.port=8080
   php-fpm:
     # For the php-fpm service, we will use our common PHP-FPM Dockerfile with the development target
     build:

@@ -124,6 +124,18 @@ COPY --from=builder /usr/local/bin/docker-php-ext-* /usr/local/bin/
 # -----------------------------------------------------------
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 
+# -----------------------------------------------------------
+# Configure PHP error logging to output to stderr (stdout + stderr)
+# -----------------------------------------------------------
+RUN echo "log_errors=On" >> $PHP_INI_DIR/conf.d/docker-logs.ini \
+ && echo "error_log=/proc/self/fd/2" >> $PHP_INI_DIR/conf.d/docker-logs.ini
+
+# -----------------------------------------------------------
+# Configure PHP-FPM to catch worker output and disable decoration
+# -----------------------------------------------------------
+RUN echo "catch_workers_output = yes" >> /usr/local/etc/php-fpm.d/www.conf \
+ && echo "decorate_workers_output = no" >> /usr/local/etc/php-fpm.d/www.conf
+
 # Enable PHP extensions in ini files
 RUN docker-php-ext-enable redis mongodb
 

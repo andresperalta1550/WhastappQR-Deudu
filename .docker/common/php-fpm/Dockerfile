@@ -136,6 +136,11 @@ RUN echo "log_errors=On" >> $PHP_INI_DIR/conf.d/docker-logs.ini \
 RUN echo "catch_workers_output = yes" >> /usr/local/etc/php-fpm.d/www.conf \
  && echo "decorate_workers_output = no" >> /usr/local/etc/php-fpm.d/www.conf
 
+# -----------------------------------------------------------
+# Configure PHP-FPM error log to output to stderr
+# -----------------------------------------------------------
+RUN echo "error_log = /proc/self/fd/2" >> /usr/local/etc/php-fpm.conf
+
 # Enable PHP extensions in ini files
 RUN docker-php-ext-enable redis mongodb
 

@@ -6,8 +6,6 @@ services:
     volumes:
       - ../files/laravel-storage-prod:/var/www/storage
     ports:
-      - "80:80"
-      - "443:443"
       - "8080:8080"
     ulimits:
       nofile:

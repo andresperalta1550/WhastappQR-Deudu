@@ -5,6 +5,7 @@ services:
       dockerfile: ./.docker/production/nginx/Dockerfile
     volumes:
       - ../files/laravel-storage-prod:/var/www/storage
+      - ../certs/whatsappqr.deudu.co:/etc/ssl/certs/whatsappqr.deudu.co
     ports:
       - "8080:8080"
     ulimits:

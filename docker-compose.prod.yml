@@ -19,12 +19,14 @@ services:
         condition: service_healthy # Wait for php-fpm to start
     labels:
       - traefik.enable=true
-      # Router HTTP (solo redirige)
+
+      # Router HTTP
       - traefik.http.routers.whatsappqr-deudu-http.rule=Host(`whatsappqr.deudu.co`)
       - traefik.http.routers.whatsappqr-deudu-http.entrypoints=web
       - traefik.http.routers.whatsappqr-deudu-http.middlewares=redirect-https-whatsappqr
+      - traefik.http.routers.whatsappqr-deudu-http.service=whatsappqr-deudu  # ✅ NUEVO
 
-      # Middleware de redirección
+      # Middleware
       - traefik.http.middlewares.redirect-https-whatsappqr.redirectscheme.scheme=https
       - traefik.http.middlewares.redirect-https-whatsappqr.redirectscheme.permanent=true
 
@@ -32,8 +34,9 @@ services:
       - traefik.http.routers.whatsappqr-deudu-https.rule=Host(`whatsappqr.deudu.co`)
       - traefik.http.routers.whatsappqr-deudu-https.entrypoints=websecure
       - traefik.http.routers.whatsappqr-deudu-https.tls=true
+      - traefik.http.routers.whatsappqr-deudu-https.service=whatsappqr-deudu  # ✅ NUEVO
 
-      # Internal service
+      # Service
       - traefik.http.services.whatsappqr-deudu.loadbalancer.server.port=80
 
   php-fpm:

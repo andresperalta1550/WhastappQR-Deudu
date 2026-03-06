@@ -40,7 +40,7 @@ class StatusMessageEvent extends WebhookEvent
         $message->save();
     }
 
-    private function handleSentEvent(\App\Models\Message $message, string $event): void
+    private function handleSentEvent(\App\Models\Message &$message, string $event): void
     {
         $message->setStatus($event);
         $message->setDelivery(new Delivery(
@@ -50,9 +50,9 @@ class StatusMessageEvent extends WebhookEvent
         ));
     }
 
-    private function handleDeliveredEvent(\App\Models\Message $message, string $event): void
+    private function handleDeliveredEvent(\App\Models\Message &$message, string $event): void
     {
-        $message->setStatus('delivered');
+        $message->setStatus("delivered");
         $message->setDelivery(new Delivery(
             sentAt: $message->getDelivery()?->sentAt,
             deliveredAt: isset($this->timestamp) ? \Carbon\Carbon::parse($this->timestamp, 'UTC') : null,
@@ -60,7 +60,7 @@ class StatusMessageEvent extends WebhookEvent
         ));
     }
 
-    private function handleReadEvent(\App\Models\Message $message, string $event): void
+    private function handleReadEvent(\App\Models\Message &$message, string $event): void
     {
         $message->setStatus($event);
         $message->setDelivery(new Delivery(

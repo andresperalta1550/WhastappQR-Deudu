@@ -22,10 +22,11 @@ services:
       # Router HTTP (solo redirige)
       - traefik.http.routers.whatsappqr-deudu-http.rule=Host(`whatsappqr.deudu.co`)
       - traefik.http.routers.whatsappqr-deudu-http.entrypoints=web
-      - traefik.http.routers.whatsappqr-deudu-http.middlewares=redirect-https
+      - traefik.http.routers.whatsappqr-deudu-http.middlewares=redirect-https-whatsappqr
 
       # Middleware de redirección
-      - traefik.http.middlewares.redirect-https.redirectscheme.scheme=https
+      - traefik.http.middlewares.redirect-https-whatsappqr.redirectscheme.scheme=https
+      - traefik.http.middlewares.redirect-https-whatsappqr.redirectscheme.permanent=true
 
       # Router HTTPS
       - traefik.http.routers.whatsappqr-deudu-https.rule=Host(`whatsappqr.deudu.co`)

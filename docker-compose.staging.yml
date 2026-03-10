@@ -5,7 +5,6 @@ services:
       dockerfile: ./.docker/staging/nginx/Dockerfile
     volumes:
       - ../files/laravel-storage-staging:/var/www/storage
-      - ../certs/whatsappqr-test.deudu.co:/etc/ssl/certs/whatsappqr-test.deudu.co
     networks:
       - dokploy-network
     depends_on:
@@ -17,7 +16,7 @@ services:
       # Router HTTP (redirige)
       - traefik.http.routers.whatsappqr-test-http.rule=Host(`whatsappqr-test.deudu.co`)
       - traefik.http.routers.whatsappqr-test-http.entrypoints=web
-      - traefik.http.routers.whatsappqr-test-http.middlewares=redirect-to-https
+      - traefik.http.routers.whatsappqr-test-http.middlewares=redirect-to-https@file
       - traefik.http.routers.whatsappqr-test-http.service=whatsappqr-test
 
       # Router HTTPS (APP)

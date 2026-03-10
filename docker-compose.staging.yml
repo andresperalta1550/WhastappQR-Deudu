@@ -8,7 +8,7 @@ services:
     networks:
       - dokploy-network
     depends_on:
-      php-fpm:
+      php-fpm-whatsappqr-test:
         condition: service_healthy # Wait for php-fpm to start
     labels:
       - traefik.enable=true
@@ -37,7 +37,7 @@ services:
       - traefik.http.routers.whatsappqr-test-ws.service=whatsappqr-test-ws
 
       - traefik.http.services.whatsappqr-test-ws.loadbalancer.server.port=8080
-  php-fpm:
+  php-fpm-whatsappqr-test:
     # For the php-fpm service, we will use our common PHP-FPM Dockerfile with the development target
     build:
       context: .
@@ -110,7 +110,7 @@ services:
     restart: unless-stopped
     command: ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080"]
     depends_on:
-      php-fpm:
+      php-fpm-whatsappqr-test:
         condition: service_healthy
 
 networks:

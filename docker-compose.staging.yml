@@ -17,11 +17,8 @@ services:
       # Router HTTP (redirige)
       - traefik.http.routers.whatsappqr-test-http.rule=Host(`whatsappqr-test.deudu.co`)
       - traefik.http.routers.whatsappqr-test-http.entrypoints=web
-      - traefik.http.routers.whatsappqr-test-http.middlewares=redirect-https
+      - traefik.http.routers.whatsappqr-test-http.middlewares=redirect-to-https
       - traefik.http.routers.whatsappqr-test-http.service=whatsappqr-test
-
-      # Middleware redirect
-      - traefik.http.middlewares.redirect-https.redirectscheme.scheme=https
 
       # Router HTTPS (APP)
       - traefik.http.routers.whatsappqr-test-https.rule=Host(`whatsappqr-test.deudu.co`)
@@ -60,7 +57,7 @@ services:
       retries: 3
     networks:
       - dokploy-network
-  
+
   # The 'php-cli' service provides a command-line interface for running Artisan commands and other CLI tasks.
   # -----------------------------------------------------------
   # This is useful for running migrations, seeders, or any custom scripts.

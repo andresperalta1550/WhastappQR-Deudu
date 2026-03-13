@@ -35,6 +35,8 @@ services:
       - traefik.http.routers.whatsappqr-test-ws.entrypoints=websecure
       - traefik.http.routers.whatsappqr-test-ws.tls=true
       - traefik.http.routers.whatsappqr-test-ws.service=whatsappqr-test-ws
+      - traefik.http.middlewares.whatsappqr-ws-stripprefix.stripprefix.prefixes=/ws
+      - traefik.http.routers.whatsappqr-test-ws.middlewares=whatsappqr-ws-stripprefix
 
       - traefik.http.services.whatsappqr-test-ws.loadbalancer.server.port=8080
   php-fpm-whatsappqr-test:

@@ -125,8 +125,8 @@ COPY --from=builder /usr/local/bin/docker-php-ext-* /usr/local/bin/
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 
 # Increase upload limits for 2Chat API compatibility (max 15MB)
-RUN echo "upload_max_filesize = 15M" > "$PHP_INI_DIR/conf.d/uploads.ini" && \
-    echo "post_max_size = 20M" >> "$PHP_INI_DIR/conf.d/uploads.ini"
+RUN sed -i 's/upload_max_filesize = 2M/upload_max_filesize = 15M/' "$PHP_INI_DIR/php.ini" && \
+    sed -i 's/post_max_size = 8M/post_max_size = 20M/' "$PHP_INI_DIR/php.ini"
     
 # -----------------------------------------------------------
 # Configure PHP error logging to output to stderr (stdout + stderr)
